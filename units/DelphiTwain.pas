@@ -158,7 +158,10 @@ type
    end;
 
   {Object to handle TW_IDENTITY}
-  TTwainIdentity = class(TObject)
+
+  { TTwainIdentity }
+
+  TTwainIdentity = class(TPersistent)
   private
     {Sets application language property}
     procedure SetLanguage(const Value: TTwainLanguage);
@@ -167,6 +170,8 @@ type
     {Sets avaliable groups}
     procedure SetGroups(const Value: TTwainGroups);
   protected
+    function GetId: TW_UINT32;
+    procedure SetId(AValue: TW_UINT32);
     function GetCountryCode: Word;
     function GetMajorVersion: TW_UINT16;
     function GetMinorVersion: TW_UINT16;
@@ -187,7 +192,8 @@ type
     constructor Create;
     {Copy properties from another TTwainIdentity}
     procedure Assign(Source: TObject);
-  public
+  published
+    property ID: TW_UINT32 read GetId write SetId;
     {Application major version}
     property MajorVersion: TW_UINT16 read GetMajorVersion write SetMajorVersion;
     {Application minor version}
@@ -450,6 +456,9 @@ type
   end;
 
   {Component part}
+
+  { TCustomDelphiTwain }
+
   TCustomDelphiTwain = class(TTwainComponent)
   private
     {Should contain the number of Twain sources loaded}
@@ -500,8 +509,6 @@ type
     function GetSourceCount(): Integer;
     {Returns a source from the list}
     function GetSource(Index: Integer): TTwainSource;
-    {Finds a matching source index}
-    function FindSource(Value: pTW_IDENTITY): Integer;
     //Gets selected source
     function GetSelectedSource: TTwainSource;
     //Gets selected source index
@@ -551,6 +558,11 @@ type
     {Unloads the source manager}
     function UnloadSourceManager(forced: boolean): Boolean;
     {Returns the application TW_IDENTITY}
+
+    {Finds a matching source index}
+    function FindSource(Value: pTW_IDENTITY): Integer; overload;
+    function FindSource(Value: TTwainSource): Integer; overload;
+
     property AppIdentity: pTW_IDENTITY read AppInfo;
     {Returns Twain library handle}
     property Handle: HInst read fHandle;
@@ -739,7 +751,7 @@ begin
 end;
 
 {Returns a text value}
-function TTwainIdentity.GetString(const Index: Integer): String;
+function TTwainIdentity.GetString(const Index: integer): String;
 begin
   {Test for the required property}
   case Index of
@@ -767,6 +779,16 @@ end;
 function TTwainIdentity.GetMinorVersion: TW_UINT16;
 begin
   Result := Structure.Version.MinorNum;
+end;
+
+function TTwainIdentity.GetId: TW_UINT32;
+begin
+  Result := Structure.Id;
+end;
+
+procedure TTwainIdentity.SetId(AValue: TW_UINT32);
+begin
+  Structure.Id :=AValue;
 end;
 
 {Sets application language property}
@@ -1091,6 +1113,7 @@ end;
 function TCustomDelphiTwain.FindSource(Value: pTW_IDENTITY): Integer;
 var
   i       : Integer;
+
 begin
   Result := -1; {Default result}
 
@@ -1102,6 +1125,24 @@ begin
       Result := i;
       break;
     end; {if CompareMem, for i}
+end;
+
+function TCustomDelphiTwain.FindSource(Value: TTwainSource): Integer;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result :=-1;
+
+  if (Value<>nil) then
+  for i:=0 to SourceCount-1 do
+  begin
+    curStr:=Source[i];
+    if (curStr.ID=Value.ID) and (curStr.Manufacturer=Value.Manufacturer) and
+       (curStr.ProductFamily=Value.ProductFamily) and (curStr.ProductName=Value.ProductName)
+    then begin Result:=i; break; end;
+  end;
 end;
 
 {Allows Twain to display a dialog to let the user choose any source}

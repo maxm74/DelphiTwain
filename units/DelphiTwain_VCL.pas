@@ -11,7 +11,7 @@ interface
 uses
   Windows, SysUtils, Classes, Forms, ExtCtrls, Messages, Graphics,
   {$IFDEF FPC}interfacebase,{$ENDIF}
-  DelphiTwain, Twain;
+  Twain, DelphiTwain;
 
 type
   TOnTwainAcquire = procedure(Sender: TObject; const Index: Integer; Image:
