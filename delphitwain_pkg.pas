@@ -2,13 +2,13 @@
   This source is only used to compile and install the package.
  }
 
-unit DelphiTwain;
+unit DelphiTwain_pkg;
 
 {$warn 5023 off : no warning about unused units}
 interface
 
 uses
-  DelphiTwainLang, DelphiTwainUtils, Twain, LazarusPackageIntf;
+  Twain, DelphiTwain, DelphiTwain_VCL, uFormSelectSource_VCL, DelphiTwainLang, DelphiTwainUtils, LazarusPackageIntf;
 
 implementation
 
@@ -17,5 +17,5 @@ begin
 end;
 
 initialization
-  RegisterPackage('DelphiTwain', @Register);
+  RegisterPackage('DelphiTwain_pkg', @Register);
 end.

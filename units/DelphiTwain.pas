@@ -143,7 +143,7 @@ type
     tlOrissi, tlPunjabi, tlPushtu, tlSerbianCyrillic, tlSikkimi,
     tlSwedishFinland, tlTamil, tlTelugu, tlTripuri, tlUrdu, tlVietnamese);
   {Twain supported groups}
-  TTwainGroups = set of (tgControl, tgImage, tgAudio);
+  TTwainGroups = set of (tgControl, tgImage, tgAudio, tgDSM2, tgAPP2, tgDS2);
 
   {Transfer mode for twain}
   TTwainTransferMode = (ttmFile, ttmNative, ttmMemory);
@@ -171,7 +171,6 @@ type
     procedure SetGroups(const Value: TTwainGroups);
   protected
     function GetId: TW_UINT32;
-    procedure SetId(AValue: TW_UINT32);
     function GetCountryCode: Word;
     function GetMajorVersion: TW_UINT16;
     function GetMinorVersion: TW_UINT16;
@@ -192,8 +191,9 @@ type
     constructor Create;
     {Copy properties from another TTwainIdentity}
     procedure Assign(Source: TObject);
+
+    property ID: TW_UINT32 read GetId;
   published
-    property ID: TW_UINT32 read GetId write SetId;
     {Application major version}
     property MajorVersion: TW_UINT16 read GetMajorVersion write SetMajorVersion;
     {Application minor version}
@@ -786,11 +786,6 @@ begin
   Result := Structure.Id;
 end;
 
-procedure TTwainIdentity.SetId(AValue: TW_UINT32);
-begin
-  Structure.Id :=AValue;
-end;
-
 {Sets application language property}
 procedure TTwainIdentity.SetLanguage(const Value: TTwainLanguage);
 begin
@@ -835,6 +830,12 @@ begin
     Include(Result, tgImage);
   if DG_AUDIO AND Structure.SupportedGroups <> 0 then
     Include(Result, tgAudio);
+  if DF_DSM2 AND Structure.SupportedGroups <> 0 then
+    Include(Result, tgDSM2);
+  if DF_APP2 AND Structure.SupportedGroups <> 0 then
+    Include(Result, tgAPP2);
+  if DF_DS2 AND Structure.SupportedGroups <> 0 then
+    Include(Result, tgDS2);
 end;
 
 {Sets avaliable groups}
@@ -851,6 +852,12 @@ begin
     Structure.SupportedGroups := Structure.SupportedGroups or DG_IMAGE;
   if tgAudio in Value then
     Structure.SupportedGroups := Structure.SupportedGroups or DG_AUDIO;
+  if tgDSM2 in Value then
+    Structure.SupportedGroups := Structure.SupportedGroups or DF_DSM2;
+  if tgAPP2 in Value then
+    Structure.SupportedGroups := Structure.SupportedGroups or DF_APP2;
+  if tgDS2 in Value then
+    Structure.SupportedGroups := Structure.SupportedGroups or DF_DS2;
 end;
 
 { TCustomDelphiTwain component implementation }
@@ -944,8 +951,8 @@ begin
 
     {Allocate new identity and tries to enumerate}
     NewSource := TTwainSource.Create(Self);
-    CallRes := TwainProc(AppInfo, nil, DG_CONTROL, DAT_IDENTITY,
-      MSG_GETFIRST, @NewSource.Structure);
+    NewSource.TransferMode := Self.TransferMode;
+    CallRes := fTwainProc(AppInfo, nil, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, @NewSource.Structure);
     if CallRes = TWRC_SUCCESS then
       repeat
 
@@ -956,9 +963,9 @@ begin
         NewSource.TransferMode := Self.TransferMode;
         NewSource.fIndex := DeviceList.Count;
 
-      {Try to get the next item}
-      until TwainProc(AppInfo, nil, DG_CONTROL, DAT_IDENTITY,
-        MSG_GETNEXT, @NewSource.Structure) <> TWRC_SUCCESS;
+        {Try to get the next item}
+        CallRes :=fTwainProc(AppInfo, nil, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, @NewSource.Structure);
+      until (CallRes <> TWRC_SUCCESS);
 
     {Set that the component has enumerated the devices}
     {if everything went correctly}

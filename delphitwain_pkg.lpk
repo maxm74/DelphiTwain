@@ -2,7 +2,7 @@
 <CONFIG>
   <Package Version="5">
     <PathDelim Value="\"/>
-    <Name Value="DelphiTwain"/>
+    <Name Value="DelphiTwain_pkg"/>
     <Type Value="RunAndDesignTime"/>
     <CompilerOptions>
       <Version Value="11"/>
@@ -12,15 +12,8 @@
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
     </CompilerOptions>
+    <Version Major="2" Minor="2"/>
     <Files>
-      <Item>
-        <Filename Value="units\DelphiTwainLang.pas"/>
-        <UnitName Value="DelphiTwainLang"/>
-      </Item>
-      <Item>
-        <Filename Value="units\DelphiTwainUtils.pas"/>
-        <UnitName Value="DelphiTwainUtils"/>
-      </Item>
       <Item>
         <Filename Value="units\Twain.pas"/>
         <UnitName Value="Twain"/>
@@ -29,8 +22,27 @@
         <Filename Value="units\DelphiTwain.pas"/>
         <UnitName Value="DelphiTwain"/>
       </Item>
+      <Item>
+        <Filename Value="units\DelphiTwain_VCL.pas"/>
+        <UnitName Value="DelphiTwain_VCL"/>
+      </Item>
+      <Item>
+        <Filename Value="units\uFormSelectSource_VCL.pas"/>
+        <UnitName Value="uFormSelectSource_VCL"/>
+      </Item>
+      <Item>
+        <Filename Value="units\DelphiTwainLang.pas"/>
+        <UnitName Value="DelphiTwainLang"/>
+      </Item>
+      <Item>
+        <Filename Value="units\DelphiTwainUtils.pas"/>
+        <UnitName Value="DelphiTwainUtils"/>
+      </Item>
     </Files>
     <RequiredPkgs>
+      <Item>
+        <PackageName Value="LCLBase"/>
+      </Item>
       <Item>
         <PackageName Value="FCL"/>
       </Item>
