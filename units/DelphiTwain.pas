@@ -1146,7 +1146,7 @@ begin
   for i:=0 to SourceCount-1 do
   begin
     curStr:=Source[i];
-    if (curStr.ID=Value.ID) and (curStr.Manufacturer=Value.Manufacturer) and
+    if (curStr.Manufacturer=Value.Manufacturer) and
        (curStr.ProductFamily=Value.ProductFamily) and (curStr.ProductName=Value.ProductName)
     then begin Result:=i; break; end;
   end;
