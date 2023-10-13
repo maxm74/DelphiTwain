@@ -161,7 +161,7 @@ type
 
   { TTwainIdentity }
 
-  TTwainIdentity = class(TPersistent)
+  TTwainIdentity = class(TObject)
   private
     {Sets application language property}
     procedure SetLanguage(const Value: TTwainLanguage);
@@ -169,23 +169,27 @@ type
     procedure SetString(const Index: Integer; const Value: String);
     {Sets avaliable groups}
     procedure SetGroups(const Value: TTwainGroups);
+
   protected
+    {Structure which should be filled}
+    Structure: TW_IDENTITY;
+
     function GetId: TW_UINT32;
     function GetCountryCode: Word;
+
     function GetMajorVersion: TW_UINT16;
     function GetMinorVersion: TW_UINT16;
     procedure SetCountryCode(const aCountryCode: Word);
     procedure SetMajorVersion(const aMajorVersion: TW_UINT16);
     procedure SetMinorVersion(const aMinorVersion: TW_UINT16);
-  protected
-    {Structure which should be filled}
-    Structure: TW_IDENTITY;
+
     {Returns application language property}
     function GetLanguage(): TTwainLanguage;
     {Returns text values}
     function GetString(const Index: integer): String;
     {Returns avaliable groups}
     function GetGroups(): TTwainGroups;
+
   public
     {Object being created}
     constructor Create;
@@ -193,7 +197,6 @@ type
     procedure Assign(Source: TObject);
 
     property ID: TW_UINT32 read GetId;
-  published
     {Application major version}
     property MajorVersion: TW_UINT16 read GetMajorVersion write SetMajorVersion;
     {Application minor version}
@@ -205,17 +208,13 @@ type
     {Supported groups}
     property Groups: TTwainGroups read GetGroups write SetGroups;
     {Text values}
-    property VersionInfo: String index 0 read GetString write
-      SetString;
+    property VersionInfo: String index 0 read GetString write SetString;
     {Scanner manufacturer}
-    property Manufacturer: String index 1 read GetString write
-      SetString;
+    property Manufacturer: String index 1 read GetString write SetString;
     {Scanner product family}
-    property ProductFamily: String index 2 read GetString write
-      SetString;
+    property ProductFamily: String index 2 read GetString write SetString;
     {Scanner product name}
-    property ProductName: String index 3 read GetString write
-      SetString;
+    property ProductName: String index 3 read GetString write SetString;
   end;
 
   {Return set for capability retrieving/setting}
@@ -258,6 +257,7 @@ type
     {Returns a resolution}
     function GetResolution(Capability: TW_UINT16; var Return: Extended;
       var Values: TTwainResolution; Mode: TRetrieveCap): TCapabilityRet;
+
   protected
     {Reads a native image}
     procedure ReadNative(Handle: TW_UINT32; var Cancel: Boolean);
@@ -265,7 +265,7 @@ type
     procedure ReadFile(Name: TW_STR255; Format: TW_UINT16; var Cancel: Boolean);
     {Call event for memory image}
     procedure ReadMemory(Image: HBitmap; var Cancel: Boolean);
-  protected
+
     {Prepare image memory transference}
     function PrepareMemXfer(var BitmapHandle: HBitmap;
       var PixelType: TW_INT16): TW_UINT16;
@@ -280,7 +280,7 @@ type
     property SourceManagerLoaded: Boolean read GetSourceManagerLoaded;
     {Source configuration methods}
     {************************}
-  protected
+
     {Gets an item and returns it in a string}
     procedure GetItem(var Return: String; ItemType: TW_UINT16; Data: Pointer);
     {Converts from a result to a TCapabilityRec}
@@ -288,6 +288,10 @@ type
     {Sets a capability}
     function SetCapabilityRec(const Capability, ConType: TW_UINT16;
       Data: HGLOBAL): TCapabilityRet;
+
+    {Used with property PendingXfers}
+    function GetPendingXfers(): TW_INT16;
+
   public
     {Message received in the event loop}
     function ProcessMessage(const Msg: TMsg): Boolean;
@@ -327,19 +331,16 @@ type
     {Sets an array capability}
     function SetArrayValue(Capability, ItemType: TW_UINT16;
       List: TSetCapabilityList): TCapabilityRet;
-  public
+
     {Setup file transfer}
     function SetupFileTransfer(Filename: String; Format: TTwainFormat): Boolean;
-  protected
-    {Used with property PendingXfers}
-    function GetPendingXfers(): TW_INT16;
-  public
+
     {Set source transfer mode}
     //function ChangeTransferMode(NewMode: TTwainTransferMode): TCapabilityRet;
     {Transfer mode for transfering images from the source to}
     {the component and finally to the application}
     property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
-  public
+
     {Returns return status information}
     function GetReturnStatus(): TW_UINT16;
     {Capability setting}
@@ -416,7 +417,11 @@ type
     function SetAutoFeed(Value: WordBool): TCapabilityRet;
     {Returns number of pending transfer}
     property PendingXfers: TW_INT16 read GetPendingXfers;
-  public
+
+    {Object being created/destroyed}
+    constructor Create(AOwner: TCustomDelphiTwain);
+    destructor Destroy; override;
+
     {Enables the source}
     function EnableSource(ShowUI, Modal: Boolean): Boolean;
     {Disables the source}
@@ -431,9 +436,6 @@ type
     property Enabled: Boolean read fEnabled write SetEnabled;
     {Returns/sets if this source is loaded}
     property Loaded: Boolean read fLoaded write SetLoaded;
-    {Object being created/destroyed}
-    constructor Create(AOwner: TCustomDelphiTwain);
-    destructor Destroy; override;
     {Returns owner}
     property Owner: TCustomDelphiTwain read fOwner;
     {Source window is modal}
@@ -463,7 +465,7 @@ type
   private
     {Should contain the number of Twain sources loaded}
     fSourcesLoaded: Integer;
-  private
+
     {Event pointer holders}
     fOnSourceDisable: TOnSourceNotify;
     fOnAcquireCancel: TOnSourceNotify;
@@ -471,7 +473,7 @@ type
     fOnSourceFileTransfer: TOnSourceFileTransfer;
     fOnAcquireError: TOnTwainError;
     fOnTransferComplete: TOnTransferComplete;
-  private
+
     fSelectedSourceIndex: Integer;
     {Temp variable to allow SourceCount to be displayed in delphi}
     {property editor}
@@ -517,6 +519,7 @@ type
     procedure SetSelectedSourceIndex(const Value: Integer);
     //Refresh the VirtualWindow - usually needed when transfer was completed
     procedure RefreshVirtualWindow;
+
   protected
     fVirtualWindow: THandle;
 
@@ -534,10 +537,11 @@ type
       HBitmap; var Cancel: Boolean); virtual; abstract;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
       const Image: HBitmap; const Current, Total: Integer); virtual; abstract;
+
   public
     {Clears the list of sources}
     procedure ClearDeviceList();
-  public
+
     {Allows Twain to display a dialog to let the user choose any source}
     {and returns the source index in the list}
     function SelectSource(): Integer;
@@ -576,7 +580,7 @@ type
     property Source[Index: Integer]: TTwainSource read GetSource;
     {Set to true if the host application does not create any windows}
     property IsConsoleApplication: Boolean read fIsConsoleApplication write fIsConsoleApplication default False;
-  public
+
     {Events}
     {Source being disabled}
     property OnSourceDisable: TOnSourceNotify read fOnSourceDisable
@@ -596,10 +600,9 @@ type
     {All images transfered}
     property OnTransferComplete: TOnTransferComplete read fOnTransferComplete
       write fOnTransferComplete;
-  public
+
     {Default transfer mode to be used with sources}
-    property TransferMode: TTwainTransferMode read fTransferMode
-      write fTransferMode;
+    property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
     {Returns the number of sources, after Library and Source Manager}
     {has being loaded}
     property SourceCount: Integer read GetSourceCount write fDummySourceCount;
@@ -612,8 +615,7 @@ type
     {Loads or unload Twain library}
     property LibraryLoaded: Boolean read fLibraryLoaded write SetLibraryLoaded;
     {Loads or unloads the source manager}
-    property SourceManagerLoaded: Boolean read fSourceManagerLoaded write
-      SetSourceManagerLoaded;
+    property SourceManagerLoaded: Boolean read fSourceManagerLoaded write SetSourceManagerLoaded;
   end;
 
 {Puts a string inside a TW_STR255}
@@ -2306,9 +2308,7 @@ begin
         {now time to transfer it}
         if rc = TWRC_SUCCESS then rc := TransferImageMemory(ImageHandle,
           PixelType);
-      end
-      {Unknown transfer mode ?}
-      else Rc := 0;
+      end;
     end;
 
     {Twain call to transfer image return}
