@@ -25,6 +25,8 @@
 {
 CHANGE LOG:
 
+2023/10    - Control over the functioning of the source code; FindSource overloaded methods
+
 2014/04/29 - Fix for unloading library cancelling acquire window on Lazarus
              Typo fixes in language constants; cosmetic fixes.
              (Thanks to Reinier).
@@ -544,7 +546,7 @@ type
 
     {Allows Twain to display a dialog to let the user choose any source}
     {and returns the source index in the list}
-    function SelectSource(): Integer;
+    function SelectSource: Integer;
     {Returns the number of loaded sources}
     property SourcesLoaded: Integer read fSourcesLoaded;
     {Enumerate the avaliable devices after Source Manager is loaded}
@@ -566,6 +568,8 @@ type
     {Finds a matching source index}
     function FindSource(Value: pTW_IDENTITY): Integer; overload;
     function FindSource(Value: TTwainSource): Integer; overload;
+    function FindSource(AManufacturer, AProductFamily, AProductName: String): Integer; overload;
+    function FindSource(AProductName: String): Integer; overload;
 
     property AppIdentity: pTW_IDENTITY read AppInfo;
     {Returns Twain library handle}
@@ -1137,19 +1141,39 @@ begin
 end;
 
 function TCustomDelphiTwain.FindSource(Value: TTwainSource): Integer;
+begin
+  Result :=FindSource(Value.Manufacturer, Value.ProductFamily, Value.ProductName);
+end;
+
+function TCustomDelphiTwain.FindSource(AManufacturer, AProductFamily, AProductName: String): Integer;
 var
   i      :Integer;
   curStr :TTwainSource;
 
 begin
   Result :=-1;
-
-  if (Value<>nil) then
   for i:=0 to SourceCount-1 do
   begin
     curStr:=Source[i];
-    if (curStr.Manufacturer=Value.Manufacturer) and
-       (curStr.ProductFamily=Value.ProductFamily) and (curStr.ProductName=Value.ProductName)
+    { #todo -oMaxM : if there is more identical scanner? }
+    if (curStr.Manufacturer=AManufacturer) and
+       (curStr.ProductFamily=AProductFamily) and (curStr.ProductName=AProductName)
+    then begin Result:=i; break; end;
+  end;
+end;
+
+function TCustomDelphiTwain.FindSource(AProductName: String): Integer;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result :=-1;
+  for i:=0 to SourceCount-1 do
+  begin
+    curStr:=Source[i];
+    { #todo -oMaxM : if there is more identical scanner? }
+    if (Source[i].ProductName=AProductName)
     then begin Result:=i; break; end;
   end;
 end;
