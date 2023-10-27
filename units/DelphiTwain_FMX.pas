@@ -16,30 +16,28 @@ type
   TOnAcquireProgress = procedure(Sender: TObject; const Index: Integer;
     const Current, Total: Integer) of object;
 
+  { TDelphiTwain }
+
   TDelphiTwain = class(TCustomDelphiTwain)
   private
     fMessagesTimer: TTimer;
-
-    procedure DoMessagesTimer(Sender: TObject);
-    procedure WndProc(var Message: TMessage);
-  private
     fOnTwainAcquire: TOnTwainAcquire;
     fOnAcquireProgress: TOnAcquireProgress;
+
+    procedure DoMessagesTimer(Sender: TObject);
+
   protected
-    procedure DoCreate; override;
-    procedure DoDestroy; override;
     procedure MessageTimer_Enable; override;
     procedure MessageTimer_Disable; override;
     function CustomSelectSource: Integer; override;
-    function CustomGetParentWindow: TW_HANDLE; override;
 
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:
       HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
       const Image: HBitmap; const Current, Total: Integer); override;
   public
-    constructor Create; override;
-    destructor Destroy; override;
+    procedure DoCreateTimer; override;
+    procedure DoDestroyTimer; override;
   public
     {Image acquired}
     property OnTwainAcquire: TOnTwainAcquire read fOnTwainAcquire
@@ -100,21 +98,6 @@ begin
   end;
 end;
 
-constructor TDelphiTwain.Create;
-begin
-  inherited Create;
-
-  fMessagesTimer := TTimer.Create(nil);
-  fMessagesTimer.Enabled := False;
-  fMessagesTimer.Interval := 100;
-  fMessagesTimer.OnTimer := DoMessagesTimer;
-end;
-
-function TDelphiTwain.CustomGetParentWindow: TW_HANDLE;
-begin
-  Result := 0;
-end;
-
 function TDelphiTwain.CustomSelectSource: Integer;
 var
   xForm: TFormSelectSource;
@@ -144,13 +127,6 @@ begin
   end;
 end;
 
-destructor TDelphiTwain.Destroy;
-begin
-  FreeAndNil(fMessagesTimer);
-
-  inherited;
-end;
-
 procedure TDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
   const Image: HBitmap; const Current, Total: Integer);
 begin
@@ -158,12 +134,17 @@ begin
     fOnAcquireProgress(Self, Index, Current, Total);
 end;
 
-procedure TDelphiTwain.DoMessagesTimer(Sender: TObject);
+procedure TDelphiTwain.DoCreateTimer;
 begin
-  //MUST BE HERE SO THAT TWAIN RECEIVES MESSAGES
-  if VirtualWindow > 0 then begin
-    SendMessage(VirtualWindow, WM_USER, 0, 0);
-  end;
+  fMessagesTimer := TTimer.Create(nil);
+  fMessagesTimer.Enabled := False;
+  fMessagesTimer.Interval := 100;
+  fMessagesTimer.OnTimer := DoMessagesTimer;
+end;
+
+procedure TDelphiTwain.DoDestroyTimer;
+begin
+  FreeAndNil(fMessagesTimer);
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
@@ -193,52 +174,6 @@ procedure TDelphiTwain.MessageTimer_Enable;
 begin
   if Assigned(fMessagesTimer) then
     fMessagesTimer.Enabled := True;
-end;
-
-procedure TDelphiTwain.DoCreate;
-begin
-  inherited;
-
-  fVirtualWindow := Classes.AllocateHWnd(WndProc);
-end;
-
-procedure TDelphiTwain.DoDestroy;
-begin
-  DestroyWindow(VirtualWindow);
-
-  inherited;
-end;
-
-procedure TDelphiTwain.WndProc(var Message: TMessage);
-var
-  i    : Integer;
-  xMsg  : TMsg;
-begin
-  //WndProc := False;
-  with Message do begin
-  {Tests for the message}
-    {Try to obtain the current object pointer}
-    if Assigned(Self) then
-      {If there are sources loaded, we need to verify}
-      {this message}
-      if (Self.SourcesLoaded > 0) then
-      begin
-        {Convert parameters to a TMsg}
-        xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
-        {Tell about this message}
-        FOR i := 0 TO Self.SourceCount - 1 DO
-          if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
-            if Self.Source[i].ProcessMessage(xMsg) then
-            begin
-              {Case this was a message from the source, there is}
-              {no need for the default procedure to process}
-              //Result := 0;
-              //WndProc := True;
-              Exit;
-            end;
-
-      end; {if (Twain.SourcesLoaded > 0)}
-  end;
 end;
 
 end.

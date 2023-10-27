@@ -19,19 +19,23 @@ type
   TOnAcquireProgress = procedure(Sender: TObject; const Index: Integer;
     const Image: HBitmap; const Current, Total: Integer) of object;
 
+  { TDelphiTwain }
+
   TDelphiTwain = class(TCustomDelphiTwain)
   private
     fMessagesTimer: TTimer;
-
-    procedure DoMessagesTimer(Sender: TObject);
-    procedure WndProc(var Message: TMessage);
-    function WndFunc(var Message: TMessage): Boolean;
-  private
     fOnTwainAcquire: TOnTwainAcquire;
     fOnAcquireProgress: TOnAcquireProgress;
+
   protected
-    procedure DoCreate; override;
-    procedure DoDestroy; override;
+    {$IFNDEF FPC}
+    function WndFunc(var Message: TMessage): Boolean;
+    {$ENDIF}
+    procedure DoCreateVirtualWindow; override;
+    procedure DoDestroyVirtualWindow; override;
+
+    procedure DoCreateTimer; override;
+    procedure DoDestroyTimer; override;
     procedure MessageTimer_Enable; override;
     procedure MessageTimer_Disable; override;
     function CustomSelectSource: Integer; override;
@@ -41,16 +45,12 @@ type
       HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
       const Image: HBitmap; const Current, Total: Integer); override;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
+
   public
     {Image acquired}
-    property OnTwainAcquire: TOnTwainAcquire read fOnTwainAcquire
-      write fOnTwainAcquire;
+    property OnTwainAcquire: TOnTwainAcquire read fOnTwainAcquire write fOnTwainAcquire;
     {Acquire progress, for memory transfers}
-    property OnAcquireProgress: TOnAcquireProgress read fOnAcquireProgress
-      write fOnAcquireProgress;
+    property OnAcquireProgress: TOnAcquireProgress read fOnAcquireProgress write fOnAcquireProgress;
   end;
 
 implementation
@@ -81,16 +81,6 @@ end;
 {$ENDIF}
 
 { TDelphiTwain }
-
-constructor TDelphiTwain.Create;
-begin
-  inherited Create;
-
-  fMessagesTimer := TTimer.Create(nil);
-  fMessagesTimer.Enabled := False;
-  fMessagesTimer.Interval := 100;
-  fMessagesTimer.OnTimer := DoMessagesTimer;
-end;
 
 function TDelphiTwain.CustomGetParentWindow: TW_HANDLE;
 begin
@@ -134,26 +124,11 @@ begin
   end;
 end;
 
-destructor TDelphiTwain.Destroy;
-begin
-  FreeAndNil(fMessagesTimer);
-
-  inherited;
-end;
-
 procedure TDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
   const Image: HBitmap; const Current, Total: Integer);
 begin
   if Assigned(fOnAcquireProgress) then
     fOnAcquireProgress(Self, Index, Image, Current, Total);
-end;
-
-procedure TDelphiTwain.DoMessagesTimer(Sender: TObject);
-begin
-  //MUST BE HERE SO THAT TWAIN RECEIVES MESSAGES
-  if VirtualWindow > 0 then begin
-    SendMessage(VirtualWindow, WM_USER, 0, 0);
-  end;
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
@@ -184,13 +159,11 @@ begin
     fMessagesTimer.Enabled := True;
 end;
 
-procedure TDelphiTwain.DoCreate;
+procedure TDelphiTwain.DoCreateVirtualWindow;
 begin
-  inherited;
-
-  if IsLibrary then begin
-    fVirtualWindow := Classes.AllocateHWnd(WndProc);
-  end else begin
+  if IsLibrary
+  then inherited DoCreateVirtualWindow
+  else begin
     {$IFDEF FPC}
     if Assigned(Application.MainForm) and (Application.MainForm.Visible) then
       fVirtualWindow := Application.MainFormHandle
@@ -211,11 +184,11 @@ begin
   end;
 end;
 
-procedure TDelphiTwain.DoDestroy;
+procedure TDelphiTwain.DoDestroyVirtualWindow;
 begin
-  if IsLibrary then begin
-    DestroyWindow(VirtualWindow);
-  end else begin
+  if IsLibrary
+  then inherited DoDestroyVirtualWindow
+  else begin
     {$IFDEF FPC}
     xTwainList.Remove(Self);
     if xTwainList.Count = 0 then begin
@@ -225,10 +198,22 @@ begin
     Application.UnhookMainWindow(WndFunc);
     {$ENDIF}
   end;
-
-  inherited;
 end;
 
+procedure TDelphiTwain.DoCreateTimer;
+begin
+  fMessagesTimer := TTimer.Create(nil);
+  fMessagesTimer.Enabled := False;
+  fMessagesTimer.Interval := 100;
+  fMessagesTimer.OnTimer := DoMessagesTimer;
+end;
+
+procedure TDelphiTwain.DoDestroyTimer;
+begin
+  FreeAndNil(fMessagesTimer);
+end;
+
+{$IFNDEF FPC}
 function TDelphiTwain.WndFunc(var Message: TMessage): Boolean;
 var
   i    : Integer;
@@ -260,37 +245,6 @@ begin
         end; {if (Twain.SourcesLoaded > 0)}
   end;
 end;
-
-procedure TDelphiTwain.WndProc(var Message: TMessage);
-var
-  i    : Integer;
-  xMsg  : TMsg;
-begin
-  //WndProc := False;
-  with Message do begin
-  {Tests for the message}
-      {Try to obtain the current object pointer}
-      if Assigned(Self) then
-        {If there are sources loaded, we need to verify}
-        {this message}
-       if (Self.SourcesLoaded > 0) then
-        begin
-          {Convert parameters to a TMsg}
-          xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
-          {Tell about this message}
-          FOR i := 0 TO Self.SourceCount - 1 DO
-            if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
-              if Self.Source[i].ProcessMessage(xMsg) then
-              begin
-                {Case this was a message from the source, there is}
-                {no need for the default procedure to process}
-                //Result := 0;
-                //WndProc := True;
-                Exit;
-              end;
-
-        end; {if (Twain.SourcesLoaded > 0)}
-  end;
-end;
+{$ENDIF}
 
 end.

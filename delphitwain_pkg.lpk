@@ -11,6 +11,11 @@
         <OtherUnitFiles Value="units"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="0"/>
+        </Optimizations>
+      </CodeGeneration>
     </CompilerOptions>
     <Version Major="2" Minor="2"/>
     <Files>

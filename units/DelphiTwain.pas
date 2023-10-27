@@ -25,7 +25,12 @@
 {
 CHANGE LOG:
 
-2023/10    - Control over the functioning of the source code; FindSource overloaded methods
+2023/10    - Completely changed the creation scheme
+             Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
+                    DoCreateTimer; DoDestroyTimer; DoMessagesTimer;
+             First Test of VirtualWindow/Timer in Console Application;
+
+2023/10/01 - Control over the functioning of the source code; FindSource overloaded methods
 
 2014/04/29 - Fix for unloading library cancelling acquire window on Lazarus
              Typo fixes in language constants; cosmetic fixes.
@@ -59,7 +64,7 @@ interface
 {Used units}
 uses
   SysUtils, Windows, Messages,
-  {$IFDEF FPC}Classes, {$ENDIF}
+  {$IFDEF FPC}Classes, fptimer,{$ENDIF}
   Twain, DelphiTwainUtils;
 
 const
@@ -70,10 +75,11 @@ const
   TWAINLIBRARY: String = 'TWAIN_32.DLL';
   {$ENDIF}
 
-const
   {Error codes}
   ERROR_BASE              = 300;
   ERROR_INT16: TW_INT16   = HIGH(TW_INT16);
+
+  VirtualWinClassName: array[0..9] of WideChar = ('T', 'w', 'a', 'i', 'n', 'P', 'a', 'c', 'k', #0);
 
 type
   {From twain}
@@ -503,6 +509,7 @@ type
     fSourceManagerLoaded: Boolean;
     {Set to true if the host application does not create any windows}
     fIsConsoleApplication: Boolean;
+
     {Procedure to load and unload twain library and update property}
     procedure SetLibraryLoaded(const Value: Boolean);
     {Procedure to load or unloaded the twain source manager}
@@ -524,16 +531,29 @@ type
 
   protected
     fVirtualWindow: THandle;
+    {$IFDEF FPC}
+    fMessagesTimer: TFPTimer;
+    {$ENDIF}
+
+    procedure WndProc(var Message: TMessage);
 
     {Returns the default source}
     function GetDefaultSource: Integer;
 
     procedure DoCreate; virtual;
     procedure DoDestroy; virtual;
-    procedure MessageTimer_Enable; virtual; abstract;
-    procedure MessageTimer_Disable; virtual; abstract;
+
+    procedure DoCreateVirtualWindow; virtual;
+    procedure DoDestroyVirtualWindow; virtual;
+
+    procedure DoCreateTimer; virtual;
+    procedure DoDestroyTimer; virtual;
+    procedure DoMessagesTimer(Sender: TObject); virtual;
+    procedure MessageTimer_Enable; virtual;
+    procedure MessageTimer_Disable; virtual;
+
     function CustomSelectSource: Integer; virtual; abstract;
-    function CustomGetParentWindow: TW_HANDLE; virtual; abstract;
+    function CustomGetParentWindow: TW_HANDLE; virtual;
 
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:
       HBitmap; var Cancel: Boolean); virtual; abstract;
@@ -985,6 +1005,38 @@ begin
   else Result := FALSE; {If library and source manager aren't loaded}
 end;
 
+procedure TCustomDelphiTwain.WndProc(var Message: TMessage);
+var
+  i    : Integer;
+  xMsg  : TMsg;
+begin
+  //WndProc := False;
+  with Message do begin
+  {Tests for the message}
+      {Try to obtain the current object pointer}
+      if Assigned(Self) then
+        {If there are sources loaded, we need to verify}
+        {this message}
+       if (Self.SourcesLoaded > 0) then
+        begin
+          {Convert parameters to a TMsg}
+          xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
+          {Tell about this message}
+          FOR i := 0 TO Self.SourceCount - 1 DO
+            if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
+              if Self.Source[i].ProcessMessage(xMsg) then
+              begin
+                {Case this was a message from the source, there is}
+                {no need for the default procedure to process}
+                //Result := 0;
+                //WndProc := True;
+                Exit;
+              end;
+
+        end; {if (Twain.SourcesLoaded > 0)}
+  end;
+end;
+
 {Procedure to load and unload twain library and update property}
 procedure TCustomDelphiTwain.SetLibraryLoaded(const Value: Boolean);
 begin
@@ -1020,8 +1072,10 @@ end;
 procedure TCustomDelphiTwain.RefreshVirtualWindow;
 begin
   //BUG WORKAROUND
+  DoDestroyVirtualWindow;
   DoDestroy;
   DoCreate;
+  DoCreateVirtualWindow;
 
   if LoadLibrary then
     SourceManagerLoaded := True;
@@ -1078,9 +1132,140 @@ begin
   DeviceList.Free();
 end;
 
+{Virtual window procedure handler}
+function VirtualWinProc(Handle: THandle; uMsg: UINT; wParam: WPARAM;
+  lParam: LPARAM): LResult; stdcall;
+
+  {Returns the TCustomDelphiTwain object}
+  function Obj: TCustomDelphiTwain;
+  begin
+    DTNativeUInt(Result) := GetWindowLong(Handle, GWL_USERDATA);
+  end {function};
+
+var
+  Twain: TCustomDelphiTwain;
+  i    : Integer;
+  Msg  : TMsg;
+begin
+  {Tests for the message}
+  case uMsg of
+    {Creation of the window}
+    WM_CREATE:
+      {Stores the TCustomDelphiTwain object handle}
+      with {%H-}pCreateStruct(lParam)^ do
+        SetWindowLong(Handle, GWL_USERDATA, {%H-}Longint(lpCreateParams));
+    {case} else
+    begin
+      {Try to obtain the current object pointer}
+      Twain := Obj;
+
+      if Assigned(Twain) then
+        {If there are sources loaded, we need to verify}
+        {this message}
+       if (Twain.SourcesLoaded > 0) then
+        begin
+          {Convert parameters to a TMsg}
+          Msg := MakeMsg(Handle, uMsg, wParam, lParam);
+          {Tell about this message}
+          FOR i := 0 TO Twain.SourceCount - 1 DO
+            if ((Twain.Source[i].Loaded) and (Twain.Source[i].Enabled)) then
+              if Twain.Source[i].ProcessMessage(Msg) then
+              begin
+                {Case this was a message from the source, there is}
+                {no need for the default procedure to process}
+                Result := 0;
+                Exit;
+              end;
+
+        end {if (Twain.SourcesLoaded > 0)}
+
+
+    end {case Else}
+  end {case uMsg of};
+
+  {Calls method to handle}
+  Result := DefWindowProc(Handle, uMsg, wParam, lParam);
+end;
+
+procedure TCustomDelphiTwain.DoCreateVirtualWindow;
+
+  //fVirtualWindow := Classes.AllocateHWnd(WndProc);
+var
+  WindowClassW: WndClassW;
+  ResultReg:Integer;
+
+begin
+  with WindowClassW do
+  begin
+    Style :=0; // CS_DBLCLKS;
+    LPFnWndProc := @VirtualWinProc;
+    CbClsExtra := 0;
+    CbWndExtra := 0;
+    hIcon := 0;
+    hCursor := 0;
+    hbrBackground := 0;
+    LPSzMenuName := nil;
+    LPSzClassName := @VirtualWinClassName;
+  end;
+  WindowClassW.hInstance := HInstance;
+  ResultReg := Windows.RegisterClassW(WindowClassW);
+
+  fVirtualWindow :=CreateWindowExW(0, @VirtualWinClassName, @VirtualWinClassName,
+    WS_POPUP, 0, 0, 0, 0, HWND(nil), HMENU(nil), HInstance, Self);
+end;
+
+procedure TCustomDelphiTwain.DoDestroyVirtualWindow;
+begin
+  DestroyWindow(fVirtualWindow);
+end;
+
+procedure TCustomDelphiTwain.DoCreateTimer;
+begin
+ {$IFDEF FPC}
+ fMessagesTimer := TFPTimer.Create(nil);
+ fMessagesTimer.Enabled := False;
+ fMessagesTimer.Interval := 100;
+ fMessagesTimer.OnTimer := DoMessagesTimer;
+ {$ENDIF}
+end;
+
+procedure TCustomDelphiTwain.DoDestroyTimer;
+begin
+ {$IFDEF FPC}
+  FreeAndNil(fMessagesTimer);
+ {$ENDIF}
+end;
+
+procedure TCustomDelphiTwain.DoMessagesTimer(Sender: TObject);
+begin
+  //MUST BE HERE SO THAT TWAIN RECEIVES MESSAGES
+  if (VirtualWindow > 0)
+  then SendMessage(VirtualWindow, WM_USER, 0, 0);
+end;
+
+procedure TCustomDelphiTwain.MessageTimer_Enable;
+begin
+  {$IFDEF FPC}
+  if Assigned(fMessagesTimer)
+  then fMessagesTimer.Enabled := True;
+  {$ENDIF}
+end;
+
+procedure TCustomDelphiTwain.MessageTimer_Disable;
+begin
+  {$IFDEF FPC}
+  if Assigned(fMessagesTimer)
+  then fMessagesTimer.Enabled := False;
+  {$ENDIF}
+end;
+
+function TCustomDelphiTwain.CustomGetParentWindow: TW_HANDLE;
+begin
+  Result := 0;
+end;
+
 {Returns a TMsg structure}
-function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM;
-  lParam: LPARAM): TMsg;
+function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): TMsg;
 begin
   {Fill structure with the parameters}
   Result.hwnd := Handle;
@@ -1266,11 +1451,15 @@ begin
   fSelectedSourceIndex := -1;
 
   DoCreate;
+  DoCreateVirtualWindow;
+  DoCreateTimer;
 end;
 
 {Object being destroyed}
 destructor TCustomDelphiTwain.Destroy;
 begin
+  DoDestroyTimer;
+  DoDestroyVirtualWindow;
   DoDestroy;
 
   {Let ancestor class handle}
@@ -2993,62 +3182,6 @@ begin
   end
   else Result := ERROR_INT16;  {Source not loaded/enabled}
 end;
-
-{Virtual window procedure handler}
-function VirtualWinProc(Handle: THandle; uMsg: UINT; wParam: WPARAM;
-  lParam: LPARAM): LResult; stdcall;
-
-  {Returns the TCustomDelphiTwain object}
-  function Obj: TCustomDelphiTwain;
-  begin
-    DTNativeUInt(Result) := GetWindowLong(Handle, GWL_USERDATA);
-  end {function};
-
-var
-  Twain: TCustomDelphiTwain;
-  i    : Integer;
-  Msg  : TMsg;
-begin
-  {Tests for the message}
-  case uMsg of
-    {Creation of the window}
-    WM_CREATE:
-      {Stores the TCustomDelphiTwain object handle}
-      with {%H-}pCreateStruct(lParam)^ do
-        SetWindowLong(Handle, GWL_USERDATA, {%H-}Longint(lpCreateParams));
-    {case} else
-    begin
-      {Try to obtain the current object pointer}
-      Twain := Obj;
-
-      if Assigned(Twain) then
-        {If there are sources loaded, we need to verify}
-        {this message}
-       if (Twain.SourcesLoaded > 0) then
-        begin
-          {Convert parameters to a TMsg}
-          Msg := MakeMsg(Handle, uMsg, wParam, lParam);
-          {Tell about this message}
-          FOR i := 0 TO Twain.SourceCount - 1 DO
-            if ((Twain.Source[i].Loaded) and (Twain.Source[i].Enabled)) then
-              if Twain.Source[i].ProcessMessage(Msg) then
-              begin
-                {Case this was a message from the source, there is}
-                {no need for the default procedure to process}
-                Result := 0;
-                Exit;
-              end;
-
-        end {if (Twain.SourcesLoaded > 0)}
-
-
-    end {case Else}
-  end {case uMsg of};
-
-  {Calls method to handle}
-  Result := DefWindowProc(Handle, uMsg, wParam, lParam);
-end;
-
 
 //npeter: 2004.01.12
 //sets the acquired area
