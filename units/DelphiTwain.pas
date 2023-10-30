@@ -79,7 +79,8 @@ const
   ERROR_BASE              = 300;
   ERROR_INT16: TW_INT16   = HIGH(TW_INT16);
 
-  VirtualWinClassName: array[0..9] of WideChar = ('T', 'w', 'a', 'i', 'n', 'P', 'a', 'c', 'k', #0);
+  VirtualWinClassName: array[0..15] of WideChar =
+  ('D', 'e', 'l', 'p', 'h', 'i','T', 'w', 'a', 'i', 'n', 'P', 'a', 'c', 'k', #0);
 
 type
   {From twain}
@@ -1133,8 +1134,7 @@ begin
 end;
 
 {Virtual window procedure handler}
-function VirtualWinProc(Handle: THandle; uMsg: UINT; wParam: WPARAM;
-  lParam: LPARAM): LResult; stdcall;
+function VirtualWinProc(Handle: THandle; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LResult; stdcall;
 
   {Returns the TCustomDelphiTwain object}
   function Obj: TCustomDelphiTwain;
@@ -1195,23 +1195,26 @@ var
   ResultReg:Integer;
 
 begin
-  with WindowClassW do
+  if (Windows.GetClassInfoW(HInstance, @VirtualWinClassName, @WindowClassW)=False) then
   begin
-    Style :=0; // CS_DBLCLKS;
-    LPFnWndProc := @VirtualWinProc;
-    CbClsExtra := 0;
-    CbWndExtra := 0;
-    hIcon := 0;
-    hCursor := 0;
-    hbrBackground := 0;
-    LPSzMenuName := nil;
-    LPSzClassName := @VirtualWinClassName;
+    with WindowClassW do
+    begin
+      Style :=0;
+      LPFnWndProc := @VirtualWinProc;
+      CbClsExtra := 0;
+      CbWndExtra := 0;
+      hIcon := 0;
+      hCursor := 0;
+      hbrBackground := 0;
+      LPSzMenuName := nil;
+      LPSzClassName := @VirtualWinClassName;
+    end;
+    WindowClassW.hInstance :=HInstance;
+    ResultReg :=Windows.RegisterClassW(WindowClassW);
   end;
-  WindowClassW.hInstance := HInstance;
-  ResultReg := Windows.RegisterClassW(WindowClassW);
 
   fVirtualWindow :=CreateWindowExW(0, @VirtualWinClassName, @VirtualWinClassName,
-    WS_POPUP, 0, 0, 0, 0, HWND(nil), HMENU(nil), HInstance, Self);
+    WS_POPUP, 0, 0, 0, 0, 0, 0, (*HWND(nil), HMENU(nil),*) HInstance, Self);
 end;
 
 procedure TCustomDelphiTwain.DoDestroyVirtualWindow;

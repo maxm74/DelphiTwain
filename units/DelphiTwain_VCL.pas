@@ -8,6 +8,8 @@ unit DelphiTwain_VCL;
 
 interface
 
+//{$DEFINE USE_CENTRALIZED_WIN}
+
 uses
   Windows, SysUtils, Classes, Forms, ExtCtrls, Messages, Graphics,
   {$IFDEF FPC}interfacebase,{$ENDIF}
@@ -28,11 +30,13 @@ type
     fOnAcquireProgress: TOnAcquireProgress;
 
   protected
+   {$IFDEF USE_CENTRALIZED_WIN}
     {$IFNDEF FPC}
     function WndFunc(var Message: TMessage): Boolean;
     {$ENDIF}
     procedure DoCreateVirtualWindow; override;
     procedure DoDestroyVirtualWindow; override;
+   {$ENDIF}
 
     procedure DoCreateTimer; override;
     procedure DoDestroyTimer; override;
@@ -57,6 +61,8 @@ implementation
 
 uses uFormSelectSource_VCL, Controls;
 
+{$IFDEF USE_CENTRALIZED_WIN}
+
 {$IFDEF FPC}
 var
   xTwainList: TList = nil;
@@ -79,6 +85,8 @@ begin
   Result := CallWindowProc(xAppWndCallback,Ahwnd, uMsg, WParam, LParam);
 end;
 {$ENDIF}
+
+{$ENDIF} //USE_CENTRALIZED_WIN
 
 { TDelphiTwain }
 
@@ -159,6 +167,42 @@ begin
     fMessagesTimer.Enabled := True;
 end;
 
+{$IFDEF USE_CENTRALIZED_WIN}
+
+{$IFNDEF FPC}
+function TDelphiTwain.WndFunc(var Message: TMessage): Boolean;
+var
+  i    : Integer;
+  xMsg  : TMsg;
+begin
+  Result := False;
+  with Message do begin
+  {Tests for the message}
+      {Try to obtain the current object pointer}
+      if Assigned(Self) then
+        {If there are sources loaded, we need to verify}
+        {this message}
+       if (Self.SourcesLoaded > 0) then
+        begin
+          {Convert parameters to a TMsg}
+          xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
+          {Tell about this message}
+          FOR i := 0 TO Self.SourceCount - 1 DO
+            if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
+              if Self.Source[i].ProcessMessage(xMsg) then
+              begin
+                {Case this was a message from the source, there is}
+                {no need for the default procedure to process}
+                Result := 0;
+                WndFunc := True;
+                Exit;
+              end;
+
+        end; {if (Twain.SourcesLoaded > 0)}
+  end;
+end;
+{$ENDIF}
+
 procedure TDelphiTwain.DoCreateVirtualWindow;
 begin
   if IsLibrary
@@ -200,6 +244,8 @@ begin
   end;
 end;
 
+{$ENDIF} //USE_CENTRALIZED_WIN
+
 procedure TDelphiTwain.DoCreateTimer;
 begin
   fMessagesTimer := TTimer.Create(nil);
@@ -213,38 +259,5 @@ begin
   FreeAndNil(fMessagesTimer);
 end;
 
-{$IFNDEF FPC}
-function TDelphiTwain.WndFunc(var Message: TMessage): Boolean;
-var
-  i    : Integer;
-  xMsg  : TMsg;
-begin
-  Result := False;
-  with Message do begin
-  {Tests for the message}
-      {Try to obtain the current object pointer}
-      if Assigned(Self) then
-        {If there are sources loaded, we need to verify}
-        {this message}
-       if (Self.SourcesLoaded > 0) then
-        begin
-          {Convert parameters to a TMsg}
-          xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
-          {Tell about this message}
-          FOR i := 0 TO Self.SourceCount - 1 DO
-            if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
-              if Self.Source[i].ProcessMessage(xMsg) then
-              begin
-                {Case this was a message from the source, there is}
-                {no need for the default procedure to process}
-                Result := 0;
-                WndFunc := True;
-                Exit;
-              end;
-
-        end; {if (Twain.SourcesLoaded > 0)}
-  end;
-end;
-{$ENDIF}
 
 end.
