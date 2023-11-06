@@ -37,7 +37,6 @@ type
     procedure DoCreateVirtualWindow; override;
     procedure DoDestroyVirtualWindow; override;
    {$ENDIF}
-
     procedure DoCreateTimer; override;
     procedure DoDestroyTimer; override;
     procedure MessageTimer_Enable; override;
@@ -92,7 +91,7 @@ end;
 
 function TDelphiTwain.CustomGetParentWindow: TW_HANDLE;
 begin
-  if IsConsoleApplication then
+  if IsConsole then
     Result := 0
   else if not IsLibrary then
     Result := {$IF DEFINED(FPC) OR DEFINED(DELPHI_7_DOWN)}GetActiveWindow{$ELSE}Application.ActiveFormHandle{$IFEND}
@@ -205,7 +204,7 @@ end;
 
 procedure TDelphiTwain.DoCreateVirtualWindow;
 begin
-  if IsLibrary
+  if IsLibrary or IsConsole
   then inherited DoCreateVirtualWindow
   else begin
     {$IFDEF FPC}
@@ -230,7 +229,7 @@ end;
 
 procedure TDelphiTwain.DoDestroyVirtualWindow;
 begin
-  if IsLibrary
+  if IsLibrary or IsConsole
   then inherited DoDestroyVirtualWindow
   else begin
     {$IFDEF FPC}

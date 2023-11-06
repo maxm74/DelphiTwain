@@ -508,8 +508,6 @@ type
     fLibraryLoaded: Boolean;
     {Contains if the source manager was loaded}
     fSourceManagerLoaded: Boolean;
-    {Set to true if the host application does not create any windows}
-    fIsConsoleApplication: Boolean;
 
     {Procedure to load and unload twain library and update property}
     procedure SetLibraryLoaded(const Value: Boolean);
@@ -603,8 +601,6 @@ type
     property HasEnumerated: Boolean read fHasEnumerated;
     {Returns a source}
     property Source[Index: Integer]: TTwainSource read GetSource;
-    {Set to true if the host application does not create any windows}
-    property IsConsoleApplication: Boolean read fIsConsoleApplication write fIsConsoleApplication default False;
 
     {Events}
     {Source being disabled}
@@ -1264,7 +1260,7 @@ end;
 
 function TCustomDelphiTwain.CustomGetParentWindow: TW_HANDLE;
 begin
-  Result := 0;
+  Result := VirtualWindow;
 end;
 
 {Returns a TMsg structure}
