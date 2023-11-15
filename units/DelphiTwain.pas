@@ -229,13 +229,22 @@ type
   {Return set for capability retrieving/setting}
   TCapabilityRet = (crSuccess, crUnsupported, crBadOperation, crDependencyError,
     crLowMemory, crInvalidState, crInvalidContainer);
+
   {Kinds of capability retrieving}
-  TRetrieveCap = (rcGet, rcGetCurrent, rcGetDefault, rcReset);
+  TRetrieveCap = (rcGet, rcGetCurrent, rcGetDefault);
+
+  {Kinds of capability operation}
+  TCapabilityOperation = (capGet, capGetCurrent, capGetDefault, capReset, capResetAll, capSet, capSetConstraint);
+  TCapabilityOperations = set of TCapabilityOperation;
+
   {Capability list type}
   TGetCapabilityList = array of string;
   TSetCapabilityList = array of pointer;
 
   {Source object}
+
+  { TTwainSource }
+
   TTwainSource = class(TTwainIdentity)
   private
     {Holds the item index}
@@ -304,6 +313,10 @@ type
   public
     {Message received in the event loop}
     function ProcessMessage(const Msg: TMsg): Boolean;
+
+    {Returns supported capability Mode}
+    function GetCapabilitySupportedOp(const Capability: TW_UINT16):TCapabilityOperations;
+
     {Returns a capability strucutre}
     function GetCapabilityRec(const Capability: TW_UINT16;
       var Handle: HGLOBAL; Mode: TRetrieveCap;
@@ -432,7 +445,9 @@ type
     destructor Destroy; override;
 
     {Enables the source}
-    function EnableSource(ShowUI, Modal: Boolean): Boolean;
+    function EnableSource(ShowUI, Modal: Boolean; ParentWindow:TW_HANDLE=0): Boolean; overload;
+    function EnableSource(UserInterface: TW_USERINTERFACE): Boolean; overload;
+
     {Disables the source}
     function DisableSource: Boolean;
     {Loads the source}
@@ -655,6 +670,14 @@ function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM;
   lParam: LPARAM): TMsg;
 
 implementation
+
+const
+  CapabilityRetrieveModeToTwain: Array[TRetrieveCap] of TW_UINT16 =
+  (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT);
+
+  CapabilityModeToTwain: Array[TCapabilityOperation] of TW_UINT16 =
+  (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET, MSG_RESETALL, MSG_SET, MSG_SETCONSTRAINT);
+
 
 {Returns the size of a twain type}
 function TWTypeSize(TypeName: TW_UINT16): Integer;
@@ -1507,18 +1530,27 @@ begin
 end;
 
 {Enables the source}
-function TTwainSource.EnableSource(ShowUI, Modal: Boolean): Boolean;
+function TTwainSource.EnableSource(ShowUI, Modal: Boolean; ParentWindow: TW_HANDLE): Boolean;
 var
   twUserInterface: TW_USERINTERFACE;
+
+begin
+  {Builds UserInterface structure}
+  twUserInterface.ShowUI := ShowUI;
+  twUserInterface.ModalUI := Modal;
+
+  if (ParentWindow=0)
+  then twUserInterface.hParent := Owner.CustomGetParentWindow
+  else twUserInterface.hParent := ParentWindow;
+
+  Result :=EnableSource(twUserInterface);
+end;
+
+function TTwainSource.EnableSource(UserInterface: TW_USERINTERFACE): Boolean;
 begin
   {Source must be loaded and the value changing}
   if (Loaded) and (not Enabled) then
   begin
-    {Builds UserInterface structure}
-    twUserInterface.ShowUI := ShowUI;
-    twUserInterface.ModalUI := Modal;
-    twUserInterface.hParent := Owner.CustomGetParentWindow;
-
     //npeter may be it is better to send messages to VirtualWindow
     //I am not sure, but it seems more stable with a HP TWAIN driver
     //it was: := GetActiveWindow;
@@ -1526,7 +1558,7 @@ begin
     Owner.MessageTimer_Enable;
     {Call method}
     Result := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
-      DAT_USERINTERFACE, MSG_ENABLEDS, @twUserInterface) in
+      DAT_USERINTERFACE, MSG_ENABLEDS, @UserInterface) in
       [TWRC_SUCCESS, TWRC_CHECKSTATUS]);
   end
   else {If it's either not loaded or already enabled}
@@ -1741,8 +1773,8 @@ begin
 end;
 
 {Sets a capability}
-function TTwainSource.SetCapabilityRec(const Capability,
-  ConType: TW_UINT16; Data: HGlobal): TCapabilityRet;
+function TTwainSource.SetCapabilityRec(const Capability, ConType: TW_UINT16;
+  Data: HGLOBAL): TCapabilityRet;
 var
   CapabilityInfo: TW_CAPABILITY;
 begin
@@ -1763,13 +1795,52 @@ begin
   else Result := crInvalidState  {In case the source is not loaded}
 end;
 
+function TTwainSource.GetCapabilitySupportedOp(const Capability: TW_UINT16): TCapabilityOperations;
+var
+  capRet:TCapabilityRet;
+  CapabilityInfo: TW_CAPABILITY;
+  queryRes:pTW_ONEVALUE;
+
+begin
+  Result :=[];
+
+  {Source must be loaded}
+  if Loaded then
+  begin
+    {Fill structure}
+    CapabilityInfo.Cap := Capability;
+    CapabilityInfo.ConType := TWON_ONEVALUE;
+    CapabilityInfo.hContainer := 0;
+
+    {Call method and store return}
+    capRet := ResultToCapabilityRec(Owner.TwainProc(AppInfo, @Structure,
+      DG_CONTROL, DAT_CAPABILITY, MSG_QUERYSUPPORT, @CapabilityInfo));
+
+    if (capRet = crSuccess) then
+    begin
+      try
+         queryRes := GlobalLock(CapabilityInfo.hContainer);
+         if (queryRes<>nil) then
+         begin
+           if (queryRes^.Item and TWQC_GET)=TWQC_GET then Result :=[capGet];
+           if (queryRes^.Item and TWQC_SET)=TWQC_SET then Result :=Result+[capSet];
+           if (queryRes^.Item and TWQC_GETDEFAULT)=TWQC_GETDEFAULT then Result :=Result+[capGetDefault];
+           if (queryRes^.Item and TWQC_GETCURRENT)=TWQC_GETCURRENT then Result :=Result+[capGetCurrent];
+           if (queryRes^.Item and TWQC_RESET)=TWQC_RESET then Result :=Result+[capReset];
+           if (queryRes^.Item and TWQC_SETCONSTRAINT)=TWQC_SETCONSTRAINT then Result :=Result+[capSetConstraint];
+         end;
+      finally
+        GlobalUnlock(CapabilityInfo.hContainer);
+        GlobalFree(CapabilityInfo.hContainer);
+      end;
+    end
+  end;
+end;
+
 {Returns a capability strucutre}
 function TTwainSource.GetCapabilityRec( const Capability: TW_UINT16;
   var Handle: HGLOBAL; Mode: TRetrieveCap;
   var Container: TW_UINT16): TCapabilityRet;
-const
-  ModeToTwain: Array[TRetrieveCap] of TW_UINT16 = (MSG_GET, MSG_GETCURRENT,
-    MSG_GETDEFAULT, MSG_RESET);
 var
   CapabilityInfo: TW_CAPABILITY;
 begin
@@ -1784,7 +1855,7 @@ begin
 
     {Call method and store return}
     Result := ResultToCapabilityRec(Owner.TwainProc(AppInfo, @Structure,
-      DG_CONTROL, DAT_CAPABILITY, ModeToTwain[Mode], @CapabilityInfo));
+      DG_CONTROL, DAT_CAPABILITY, CapabilityRetrieveModeToTwain[Mode], @CapabilityInfo));
 
     if Result = crSuccess then
     begin
@@ -1994,8 +2065,8 @@ end;
 
 {Returns an one value capability}
 function TTwainSource.GetOneValue(Capability: TW_UINT16;
-  var ItemType: TW_UINT16; var Value: String;
-  Mode: TRetrieveCap; MemHandle: HGLOBAL): TCapabilityRet;
+  var ItemType: TW_UINT16; var Value: string; Mode: TRetrieveCap;
+  MemHandle: HGLOBAL): TCapabilityRet;
 var
   OneV     : pTW_ONEVALUE;
   Container: TW_UINT16;
@@ -2079,8 +2150,8 @@ begin
 end;
 
 {Sets a range capability}
-function TTwainSource.SetRangeValue(Capability: TW_UINT16;
-  ItemType: TW_UINT16; Min, Max, Step, Current: TW_UINT32): TCapabilityRet;
+function TTwainSource.SetRangeValue(Capability, ItemType: TW_UINT16; Min, Max,
+  Step, Current: TW_UINT32): TCapabilityRet;
 var
   Data: HGLOBAL;
   RangeV: pTW_RANGE;
@@ -2112,8 +2183,8 @@ begin
 end;
 
 {Sets an array capability}
-function TTwainSource.SetArrayValue(Capability: TW_UINT16;
-  ItemType: TW_UINT16; List: TSetCapabilityList): TCapabilityRet;
+function TTwainSource.SetArrayValue(Capability, ItemType: TW_UINT16;
+  List: TSetCapabilityList): TCapabilityRet;
 var
   Data: HGLOBAL;
   EnumV: pTW_ENUMERATION;
@@ -2148,9 +2219,8 @@ begin
 end;
 
 {Sets an enumeration capability}
-function TTwainSource.SetEnumerationValue(Capability: TW_UINT16;
-  ItemType: TW_UINT16; CurrentIndex: TW_UINT32;
-  List: TSetCapabilityList): TCapabilityRet;
+function TTwainSource.SetEnumerationValue(Capability, ItemType: TW_UINT16;
+  CurrentIndex: TW_UINT32; List: TSetCapabilityList): TCapabilityRet;
 var
   Data: HGLOBAL;
   EnumV: pTW_ENUMERATION;
