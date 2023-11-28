@@ -728,6 +728,9 @@ function TWTypeSize(TypeName: TW_UINT16): Integer;
 function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM;
   lParam: LPARAM): TMsg;
 
+//Convert TWSS Value to TTwainPaperSize (we can't do the cast because of obsolet TWSS_B=8
+function TWSS_ToTwainPaperSize(AValue:Integer):TTwainPaperSize;
+
 //Returns the smallest TwainPaper that can contain the specified dimensions (in cm)
 function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize;
 
@@ -804,6 +807,15 @@ begin
   {If GetTwainDirectory function returns an empty string, it means}
   {that Twain was not found}
   Result := (GetTwainDirectory() <> '');
+end;
+
+function TWSS_ToTwainPaperSize(AValue:Integer):TTwainPaperSize;
+begin
+  Result :=tpsNONE;
+
+  if (AValue<TWSS_B)
+  then Result :=TTwainPaperSize(AValue)
+  else if (AValue>TWSS_B) then Result :=TTwainPaperSize(AValue-1);
 end;
 
 function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize;
