@@ -24,6 +24,10 @@
 
 {
 CHANGE LOG:
+2023/11    - Fixed various obscurities
+             Added GetCapabilitySupportedOp
+             Completed TTwainPaperSize enum and set;
+             Added PaperSizes in cm; GetTwainPaperSize function;
 
 2023/10    - Completely changed the creation scheme
              Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
@@ -95,25 +99,45 @@ type
   {File formats}
   TTwainFormat = (tfTIFF, tfPict, tfBMP, tfXBM, tfJPEG, tfFPX,
     tfTIFFMulti, tfPNG, tfSPIFF, tfEXIF, tfUnknown);
-          {Twain units}
+
+  {Twain units}
   TTwainUnit = (tuInches, tuCentimeters, tuPicas, tuPoints, tuTwips,
     tuPixels, tuUnknown);
   TTwainUnitSet = set of TTwainUnit;
+
   {Twain pixel flavor}
   TTwainPixelFlavor = (tpfChocolate, tpfVanilla, tpfUnknown);
   TTwainPixelFlavorSet = set of TTwainPixelFlavor;
+
   {Orientation}
   TTwainOrientation = (torPortrait, torLandscape);
+
   {Paper size}
-  TTwainPaperSize = (tpsA4, tpsA5, tpsB4, tpsB5, tpsB6, tpsUSLetter, tpsUSLegal);
+  TPaperSize = packed record
+    name:String[16];
+    w, h:Single;
+  end;
+
+  TTwainPaperSize = (tpsNONE, tpsA4, tpsJISB5, tpsUSLETTER, tpsUSLEGAL, tpsA5, tpsISOB4, tpsISOB6,
+   tpsUSLEDGER, tpsUSEXECUTIVE, tpsA3, tpsISOB3, tpsA6, tpsC4, tpsC5, tpsC6, tps4A0,
+   tps2A0, tpsA0, tpsA1, tpsA2, tpsA7, tpsA8, tpsA9, tpsA10, tpsISOB0, tpsISOB1,
+   tpsISOB2, tpsISOB5, tpsISOB7, tpsISOB8, tpsISOB9, tpsISOB10, tpsJISB0, tpsJISB1,
+   tpsJISB2, tpsJISB3, tpsJISB4, tpsJISB6, tpsJISB7, tpsJISB8, tpsJISB9, tpsJISB10,
+   tpsC0, tpsC1, tpsC2, tpsC3, tpsC7, tpsC8, tpsC9, tpsC10, tpsUSSTATEMENT, tpsBUSINESSCARD,
+   tpsMAXSIZE);
+  TTwainPaperSizeSet = set of TTwainPaperSize;
+
   {Auto size}
   TTwainAutoSize = (tasNone, tasAuto, tasCurrent);
+
   {Twain pixel type}
   TTwainPixelType = (tbdBw, tbdGray, tbdRgb, tbdPalette, tbdCmy, tbdCmyk,
     tbdYuv, tbdYuvk, tbdCieXYZ, tbdUnknown, tbdUnknown1, tbdUnknown2, tbdBgr);
   TTwainPixelTypeSet = set of TTwainPixelType;
+
   {Twain bit depth}
   TTwainBitDepth = array of TW_UINT16;
+
   {Twain resolutions}
   TTwainResolution = array of Extended;
 
@@ -235,7 +259,7 @@ type
 
   {Kinds of capability operation}
   TCapabilityOperation = (capGet, capGetCurrent, capGetDefault, capReset, capResetAll, capSet, capSetConstraint);
-  TCapabilityOperations = set of TCapabilityOperation;
+  TCapabilityOperationSet = set of TCapabilityOperation;
 
   {Capability list type}
   TGetCapabilityList = array of string;
@@ -315,7 +339,7 @@ type
     function ProcessMessage(const Msg: TMsg): Boolean;
 
     {Returns supported capability Mode}
-    function GetCapabilitySupportedOp(const Capability: TW_UINT16):TCapabilityOperations;
+    function GetCapabilitySupportedOp(const Capability: TW_UINT16):TCapabilityOperationSet;
 
     {Returns a capability strucutre}
     function GetCapabilityRec(const Capability: TW_UINT16;
@@ -654,6 +678,41 @@ type
     property SourceManagerLoaded: Boolean read fSourceManagerLoaded write SetSourceManagerLoaded;
   end;
 
+const
+  CapabilityRetrieveModeToTwain: array [TRetrieveCap] of TW_UINT16 =
+    (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT);
+
+  CapabilityModeToTwain: array [TCapabilityOperation] of TW_UINT16 =
+    (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET, MSG_RESETALL, MSG_SET, MSG_SETCONSTRAINT);
+
+  PaperSizeToTwain: array [TTwainPaperSize] of TW_UINT16 =
+    (TWSS_NONE, TWSS_A4, TWSS_JISB5, TWSS_USLETTER, TWSS_USLEGAL, TWSS_A5, TWSS_ISOB4, TWSS_ISOB6,
+     TWSS_USLEDGER, TWSS_USEXECUTIVE, TWSS_A3, TWSS_ISOB3, TWSS_A6, TWSS_C4, TWSS_C5, TWSS_C6, TWSS_4A0,
+     TWSS_2A0, TWSS_A0, TWSS_A1, TWSS_A2, TWSS_A7, TWSS_A8, TWSS_A9, TWSS_A10, TWSS_ISOB0, TWSS_ISOB1,
+     TWSS_ISOB2, TWSS_ISOB5, TWSS_ISOB7, TWSS_ISOB8, TWSS_ISOB9, TWSS_ISOB10, TWSS_JISB0, TWSS_JISB1,
+     TWSS_JISB2, TWSS_JISB3, TWSS_JISB4, TWSS_JISB6, TWSS_JISB7, TWSS_JISB8, TWSS_JISB9, TWSS_JISB10,
+     TWSS_C0, TWSS_C1, TWSS_C2, TWSS_C3, TWSS_C7, TWSS_C8, TWSS_C9, TWSS_C10, TWSS_USSTATEMENT, TWSS_BUSINESSCARD,
+     TWSS_MAXSIZE);
+
+  //Sizes of Papers in cm (fuck inch)
+  PaperSizesTwain: array [TTwainPaperSize] of TPaperSize =
+   ((name:''; w:0; h:0), (name:'A4'; w:21.0; h:29.7), (name:'JIS B5'; w:18.2; h:25.7), (name:'US Letter'; w:21.6; h:27.9),
+    (name:'US Legal'; w:21.6; h:35.6), (name:'A5'; w:14.8; h:21.0), (name:'ISO B4'; w:25.0; h:35.3), (name:'ISO B6'; w:12.5; h:17.6),
+    (name:'US Ledger'; w:43.2; h:27.9), (name:'US Executive'; w:18.4; h:26.7), (name:'A3'; w:29.7; h:42.0), (name:'ISO B3'; w:35.3; h:50.0),
+    (name:'A6'; w:4.1; h:5.8), (name:'C4'; w:22.9; h:32.4), (name:'C5'; w:16.2; h:22.9), (name:'C6'; w:11.4; h:16.2),
+    (name:'4A0'; w:168.2; h:237.8), (name:'2A0'; w:118.9; h:168.2), (name:'A0'; w:84.1; h:118.9),  (name:'A1'; w:59.4; h:84.1),
+    (name:'A2'; w:42.0; h:59.4), (name:'A7'; w:7.4; h:10.5), (name:'A8'; w:5.2; h:7.4), (name:'A9'; w:3.7; h:5.2), (name:'A10'; w:2.6; h:3.7),
+    (name:'ISO B0'; w:100.0; h:141.4), (name:'ISO B1'; w:70.7; h:100.0), (name:'ISO B2'; w:50.0; h:70.7), (name:'ISO B5'; w:17.6; h:25.0),
+    (name:'ISO B7'; w:8.8; h:12.5), (name:'ISO B8'; w:6.2; h:8.8), (name:'ISO B9'; w:4.4; h:6.2), (name:'ISO B10'; w:3.1; h:4.4),
+    (name:'JIS B0'; w:103.0; h:145.6), (name:'JIS B1'; w:72.8; h:103.0), (name:'JIS B2'; w:51.5; h:72.8), (name:'JIS B3'; w:36.4; h:51.5),
+    (name:'JIS B4'; w:25.7; h:36.4), (name:'JIS B6'; w:12.8; h:18.2), (name:'JIS B7'; w:9.1; h:12.8), (name:'JIS B8'; w:6.4; h:9.1),
+    (name:'JIS B9'; w:4.5; h:6.4), (name:'JIS B10'; w:3.2; h:4.5),
+    (name:'C0'; w:91.7; h:129.7), (name:'C1'; w:64.8; h:91.7), (name:'C2'; w:45.8; h:64.8), (name:'C3'; w:32.4; h:45.8),
+    (name:'C7'; w:8.1; h:11.4), (name:'C8'; w:5.7; h:8.1), (name:'C9'; w:4.0; h:5.7), (name:'C10'; w:2.8; h:4.0),
+    (name:'US Statement'; w:14.0; h:21.6), (name:'Business card'; w:9.0; h:5.5),
+    (name:''; w:0; h:0)
+   );
+
 {Puts a string inside a TW_STR255}
 {$IFDEF UNICODE}
 function StrToStr255(Value: RawByteString): TW_STR255;
@@ -662,22 +721,17 @@ function StrToStr255(Value: String): TW_STR255;
 {$ENDIF}
 {This method returns if Twain is installed in the current machine}
 function IsTwainInstalled(): Boolean;
-{Called by Delphi to register the component}
+
 {Returns the size of a twain type}
 function TWTypeSize(TypeName: TW_UINT16): Integer;
 
 function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM;
   lParam: LPARAM): TMsg;
 
+//Returns the smallest TwainPaper that can contain the specified dimensions (in cm)
+function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize;
+
 implementation
-
-const
-  CapabilityRetrieveModeToTwain: Array[TRetrieveCap] of TW_UINT16 =
-  (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT);
-
-  CapabilityModeToTwain: Array[TCapabilityOperation] of TW_UINT16 =
-  (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET, MSG_RESETALL, MSG_SET, MSG_SETCONSTRAINT);
-
 
 {Returns the size of a twain type}
 function TWTypeSize(TypeName: TW_UINT16): Integer;
@@ -750,6 +804,30 @@ begin
   {If GetTwainDirectory function returns an empty string, it means}
   {that Twain was not found}
   Result := (GetTwainDirectory() <> '');
+end;
+
+function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize;
+var
+   i:TTwainPaperSize;
+   curW, curH:Single;
+
+begin
+  curW :=MAXINT; curH :=MAXINT;
+  Result :=tpsMAXSIZE;
+  for i:=Low(PaperSizesTwain) to High(PaperSizesTwain) do
+  begin
+    //Current paper can contain AWidth x AHeight ?
+    if (PaperSizesTwain[i].w>=AWidth) and (PaperSizesTwain[i].h>=AHeight) then
+    begin
+      //Current paper is smallest then Result ?
+      if (PaperSizesTwain[i].w<=curW) and (PaperSizesTwain[i].h<=curH) then
+      begin
+        curW :=PaperSizesTwain[i].w;
+        curH :=PaperSizesTwain[i].h;
+        Result :=i;
+      end;
+    end;
+  end;
 end;
 
 { TTwainIdentity object implementation }
@@ -1795,7 +1873,7 @@ begin
   else Result := crInvalidState  {In case the source is not loaded}
 end;
 
-function TTwainSource.GetCapabilitySupportedOp(const Capability: TW_UINT16): TCapabilityOperations;
+function TTwainSource.GetCapabilitySupportedOp(const Capability: TW_UINT16): TCapabilityOperationSet;
 var
   capRet:TCapabilityRet;
   CapabilityInfo: TW_CAPABILITY;
@@ -2141,11 +2219,9 @@ begin
 end;
 
 function TTwainSource.SetPaperSize(Value: TTwainPaperSize): TCapabilityRet;
-//(tpsA4, tpsA5, tpsB4, tpsB5, tpsB6, tpsUSLetter, tpsUSLegal);
-const Transfer: array [TTwainPaperSize] of TW_UINT16 = (TWSS_A4LETTER, TWSS_A5, TWSS_B4, TWSS_B5LETTER, TWSS_B6, TWSS_USLETTER, TWSS_USLEGAL);
 var iValue: TW_UINT16;
 begin
-  iValue:=Transfer[value];
+  iValue:=PaperSizeToTwain[value];
   Result := SetOneValue(ICAP_SUPPORTEDSIZES, TWTY_UINT16, @iValue);
 end;
 
