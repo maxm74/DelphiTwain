@@ -24,10 +24,11 @@
 
 {
 CHANGE LOG:
-2023/11    - Fixed various obscurities
+2023/11    - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
              Completed TTwainPaperSize enum and set;
              Added PaperSizes in cm; GetTwainPaperSize function;
+             GetPaperSizeSet; PaperSizeToTwain as function;
 
 2023/10    - Completely changed the creation scheme
              Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
@@ -285,6 +286,7 @@ type
     fLoaded: Boolean;
     {Stores the owner}
     fOwner: TCustomDelphiTwain;
+
     {Used with property SourceManagerLoaded to test if the source manager}
     {is loaded or not.}
     function GetSourceManagerLoaded(): Boolean;
@@ -414,8 +416,13 @@ type
     function SetIPixelFlavor(Value: TTwainPixelFlavor): TCapabilityRet;
     {Set orientation}
     function SetOrientation(Value: TTwainOrientation): TCapabilityRet;
+
+    {Get Available Paper Sizes}
+    function GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
+                             var PapersList:TTwainPaperSizeSet): TCapabilityRet;
     {Set paper size}
     function SetPaperSize(Value: TTwainPaperSize): TCapabilityRet;
+
     {Set auto size}
     function SetAutoSize(Value: TTwainAutoSize): TCapabilityRet;
     {Set auto border detection}
@@ -461,8 +468,6 @@ type
     {Returns/sets if auto feed is enabled}
     function GetAutofeed(var Return: Boolean): TCapabilityRet;
     function SetAutoFeed(Value: WordBool): TCapabilityRet;
-    {Returns number of pending transfer}
-    property PendingXfers: TW_INT16 read GetPendingXfers;
 
     {Object being created/destroyed}
     constructor Create(AOwner: TCustomDelphiTwain);
@@ -478,6 +483,9 @@ type
     function LoadSource(): Boolean;
     {Unloads the source}
     function UnloadSource(): Boolean;
+
+    {Returns number of pending transfer}
+    property PendingXfers: TW_INT16 read GetPendingXfers;
     {Returns a pointer to the source identity}
     property SourceIdentity: pTW_IDENTITY read GetStructure;
     {Returns/sets if the source is enabled}
@@ -685,15 +693,6 @@ const
   CapabilityModeToTwain: array [TCapabilityOperation] of TW_UINT16 =
     (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET, MSG_RESETALL, MSG_SET, MSG_SETCONSTRAINT);
 
-  PaperSizeToTwain: array [TTwainPaperSize] of TW_UINT16 =
-    (TWSS_NONE, TWSS_A4, TWSS_JISB5, TWSS_USLETTER, TWSS_USLEGAL, TWSS_A5, TWSS_ISOB4, TWSS_ISOB6,
-     TWSS_USLEDGER, TWSS_USEXECUTIVE, TWSS_A3, TWSS_ISOB3, TWSS_A6, TWSS_C4, TWSS_C5, TWSS_C6, TWSS_4A0,
-     TWSS_2A0, TWSS_A0, TWSS_A1, TWSS_A2, TWSS_A7, TWSS_A8, TWSS_A9, TWSS_A10, TWSS_ISOB0, TWSS_ISOB1,
-     TWSS_ISOB2, TWSS_ISOB5, TWSS_ISOB7, TWSS_ISOB8, TWSS_ISOB9, TWSS_ISOB10, TWSS_JISB0, TWSS_JISB1,
-     TWSS_JISB2, TWSS_JISB3, TWSS_JISB4, TWSS_JISB6, TWSS_JISB7, TWSS_JISB8, TWSS_JISB9, TWSS_JISB10,
-     TWSS_C0, TWSS_C1, TWSS_C2, TWSS_C3, TWSS_C7, TWSS_C8, TWSS_C9, TWSS_C10, TWSS_USSTATEMENT, TWSS_BUSINESSCARD,
-     TWSS_MAXSIZE);
-
   //Sizes of Papers in cm (fuck inch)
   PaperSizesTwain: array [TTwainPaperSize] of TPaperSize =
    ((name:''; w:0; h:0), (name:'A4'; w:21.0; h:29.7), (name:'JIS B5'; w:18.2; h:25.7), (name:'US Letter'; w:21.6; h:27.9),
@@ -728,11 +727,13 @@ function TWTypeSize(TypeName: TW_UINT16): Integer;
 function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM;
   lParam: LPARAM): TMsg;
 
-//Convert TWSS Value to TTwainPaperSize (we can't do the cast because of obsolet TWSS_B=8
-function TWSS_ToTwainPaperSize(AValue:Integer):TTwainPaperSize;
+//Convert TWSS Value to TTwainPaperSize and vice versa (we can't do the cast because of obsolet TWSS_B=8)
+function PaperSizeToTwain(AValue:TTwainPaperSize):TW_UINT16;
+function TWSS_ToTwainPaperSize(AValue:TW_UINT16):TTwainPaperSize;
 
 //Returns the smallest TwainPaper that can contain the specified dimensions (in cm)
-function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize;
+function GetTwainPaperSize(AWidth, AHeight:Single):TTwainPaperSize; overload;
+function GetTwainPaperSize(AWidth, AHeight:Single; APaperSizeSet:TTwainPaperSizeSet):TTwainPaperSize; overload;
 
 implementation
 
@@ -809,7 +810,16 @@ begin
   Result := (GetTwainDirectory() <> '');
 end;
 
-function TWSS_ToTwainPaperSize(AValue:Integer):TTwainPaperSize;
+function PaperSizeToTwain(AValue: TTwainPaperSize): TW_UINT16;
+begin
+  Result:=0;
+
+  if (AValue<tpsUSLEDGER)
+  then Result :=TW_UINT16(AValue)
+  else Result :=TW_UINT16(AValue)+1;
+end;
+
+function TWSS_ToTwainPaperSize(AValue:TW_UINT16):TTwainPaperSize;
 begin
   Result :=tpsNONE;
 
@@ -827,6 +837,30 @@ begin
   curW :=MAXINT; curH :=MAXINT;
   Result :=tpsMAXSIZE;
   for i:=Low(PaperSizesTwain) to High(PaperSizesTwain) do
+  begin
+    //Current paper can contain AWidth x AHeight ?
+    if (PaperSizesTwain[i].w>=AWidth) and (PaperSizesTwain[i].h>=AHeight) then
+    begin
+      //Current paper is smallest then Result ?
+      if (PaperSizesTwain[i].w<=curW) and (PaperSizesTwain[i].h<=curH) then
+      begin
+        curW :=PaperSizesTwain[i].w;
+        curH :=PaperSizesTwain[i].h;
+        Result :=i;
+      end;
+    end;
+  end;
+end;
+
+function GetTwainPaperSize(AWidth, AHeight: Single; APaperSizeSet: TTwainPaperSizeSet): TTwainPaperSize;
+var
+   i:TTwainPaperSize;
+   curW, curH:Single;
+
+begin
+  curW :=MAXINT; curH :=MAXINT;
+  Result :=tpsMAXSIZE;
+  for i in APaperSizeSet do
   begin
     //Current paper can contain AWidth x AHeight ?
     if (PaperSizesTwain[i].w>=AWidth) and (PaperSizesTwain[i].h>=AHeight) then
@@ -2230,10 +2264,65 @@ begin
   Result := SetOneValue(ICAP_ORIENTATION, TWTY_UINT16, @iValue);
 end;
 
+function TTwainSource.GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
+                                      var PapersList:TTwainPaperSizeSet):TCapabilityRet;
+var
+  EnumV: pTW_ENUMERATION;
+  Item: pTW_UINT16;
+  CurItem: Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+  curVal: TTwainPaperSize;
+
+begin
+  PapersList:=[];
+  PaperSize:=tpsNONE;
+  PaperSize_Default:=tpsNONE;
+  MemHandle:=0;
+  Result := GetCapabilityRec(ICAP_SUPPORTEDSIZES, MemHandle, rcGet, {%H-}Container);
+
+  if (Result = crSuccess) and (Container <> TWON_ENUMERATION) then
+  begin
+    GlobalFree(MemHandle);
+    Exit;
+  end;
+
+  {If result was sucessfull and memory was allocated}
+  if (Result = crSuccess) then
+  begin
+    {Obtain structure pointer}
+    EnumV := GlobalLock(MemHandle);
+
+    //Paper Sizes must be TWTY_UINT16
+    if (EnumV^.ItemType=TWTY_UINT16) then
+    begin
+      {Prepare to list items}
+      Item := @EnumV^.ItemList[0];
+
+      {Fill the Set with items}
+      for CurItem:=0 to (EnumV^.NumItems-1) do
+      begin
+        curVal:=TWSS_ToTwainPaperSize(Item^);
+
+        if (CurItem=EnumV^.CurrentIndex) then PaperSize:=curVal;
+        if (CurItem=EnumV^.DefaultIndex) then PaperSize_Default:=curVal;
+
+        PapersList :=PapersList+[curVal];
+
+        inc(Item);
+      end;
+    end;
+
+    {Unlock memory and unallocate}
+    GlobalUnlock(MemHandle);
+    GlobalFree(MemHandle);
+  end;
+end;
+
 function TTwainSource.SetPaperSize(Value: TTwainPaperSize): TCapabilityRet;
 var iValue: TW_UINT16;
 begin
-  iValue:=PaperSizeToTwain[value];
+  iValue:=PaperSizeToTwain(Value);
   Result := SetOneValue(ICAP_SUPPORTEDSIZES, TWTY_UINT16, @iValue);
 end;
 
