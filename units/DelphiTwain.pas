@@ -266,6 +266,9 @@ type
   TGetCapabilityList = array of string;
   TSetCapabilityList = array of pointer;
 
+  TTwainPaperFeeding = (pfFlatbed, pfFeeder);
+  TTwainPaperFeedingSet = set of TTwainPaperFeeding;
+
   {Source object}
 
   { TTwainSource }
@@ -414,8 +417,16 @@ type
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     {Set the pixel flavor values}
     function SetIPixelFlavor(Value: TTwainPixelFlavor): TCapabilityRet;
+
+    {Get orientation}
+    function GetOrientation(var Value: TTwainOrientation): TCapabilityRet;
     {Set orientation}
     function SetOrientation(Value: TTwainOrientation): TCapabilityRet;
+
+    //Get Paper Feeding Set
+    function GetPaperFeeding: TTwainPaperFeedingSet;
+    //Set Paper Feeding
+    function SetPaperFeeding(Value: TTwainPaperFeeding): TCapabilityRet;
 
     {Get Available Paper Sizes}
     function GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
@@ -2256,12 +2267,79 @@ begin
   GlobalFree(Data);
 end;
 
-function TTwainSource.SetOrientation(Value: TTwainOrientation): TCapabilityRet;
-const Transfer: array [TTwainOrientation] of TW_UINT16 = (TWOR_PORTRAIT, TWOR_LANDSCAPE);
-var iValue: TW_UINT16;
+function TTwainSource.GetOrientation(var Value: TTwainOrientation): TCapabilityRet;
+var
+  OneV     : pTW_ONEVALUE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
 begin
-  iValue:=Transfer[value];
+  MemHandle:=0;
+  Result := GetCapabilityRec(ICAP_ORIENTATION, MemHandle, rcGet, {%H-}Container);
+
+  if (Result = crSuccess) and (Container <> TWTY_UINT16) then
+  begin
+    GlobalFree(MemHandle);
+    Result := crUnsupported;
+    Exit;
+  end;
+
+  {If result was sucessfull and memory was allocated}
+  if (Result = crSuccess) then
+  begin
+    {Obtain structure pointer}
+    OneV := GlobalLock(MemHandle);
+
+    Case OneV^.Item of
+    TWOR_PORTRAIT : Value :=torPortrait;
+    TWOR_LANDSCAPE: Value :=torLandscape;
+    else Result := crInvalidContainer;
+    end;
+
+    {Unlock memory and unallocate}
+    GlobalUnlock(MemHandle);
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.SetOrientation(Value: TTwainOrientation): TCapabilityRet;
+var
+  iValue: TW_UINT16;
+
+begin
+  if (Value=torPortrait)
+  then iValue:=TWOR_PORTRAIT
+  else iValue:=TWOR_LANDSCAPE;
+
   Result := SetOneValue(ICAP_ORIENTATION, TWTY_UINT16, @iValue);
+end;
+
+function TTwainSource.GetPaperFeeding: TTwainPaperFeedingSet;
+var
+   capRet: TCapabilityRet;
+   feedEnabled,
+   haveFlat,
+   haveFeed: Boolean;
+
+begin
+  Result :=[];
+
+  //Get Initial Feeder State
+  capRet :=GetFeederEnabled(feedEnabled);
+
+  capRet :=SetFeederEnabled(False);
+  if (capRet=crSuccess) then Result :=[pfFlatbed];
+
+  capRet :=SetFeederEnabled(True);
+  if (capRet=crSuccess) then Result :=Result+[pfFeeder];
+
+  //Set Feeder State to original value
+  capRet :=SetFeederEnabled(feedEnabled);
+end;
+
+function TTwainSource.SetPaperFeeding(Value: TTwainPaperFeeding): TCapabilityRet;
+begin
+  Result :=SetFeederEnabled((Value=pfFeeder));
 end;
 
 function TTwainSource.GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
@@ -2284,6 +2362,7 @@ begin
   if (Result = crSuccess) and (Container <> TWON_ENUMERATION) then
   begin
     GlobalFree(MemHandle);
+    Result := crUnsupported;
     Exit;
   end;
 
