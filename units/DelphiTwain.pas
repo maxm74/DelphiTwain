@@ -343,19 +343,32 @@ type
     {Message received in the event loop}
     function ProcessMessage(const Msg: TMsg): Boolean;
 
-    {Returns supported capability Mode}
+    {Returns supported capability Operations}
     function GetCapabilitySupportedOp(const Capability: TW_UINT16):TCapabilityOperationSet;
+    function CapabilityCanGet(const Capability: TW_UINT16):Boolean;
+    function CapabilityCanSet(const Capability: TW_UINT16):Boolean;
 
-    {Returns a capability strucutre}
+    {Returns a capability structure}
     function GetCapabilityRec(const Capability: TW_UINT16;
       var Handle: HGLOBAL; Mode: TRetrieveCap;
       var Container: TW_UINT16): TCapabilityRet;
     {************************}
-    {Returns an one value capability}
+
+    {Returns an one value Capability}
+    function GetOneValue(Capability: TW_UINT16; var Value:Integer;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+    function GetOneValue(Capability: TW_UINT16; var Value:Extended;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+    function GetOneValue(Capability: TW_UINT16; var Value:Boolean;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+    function GetOneValue(Capability: TW_UINT16; var Value:String;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+
     function GetOneValue(Capability: TW_UINT16;
       var ItemType: TW_UINT16; var Value: string;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF};
-      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
+
     {Returns an range capability}
     function GetRangeValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
       var Min, Max, Step, Default, Current: String;
@@ -406,11 +419,13 @@ type
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     {Set the unit measure}
     function SetICapUnits(Value: TTwainUnit): TCapabilityRet;
-    {npeter 2004.01.12 begin}
+
     function SetImagelayoutFrame(const fLeft,fTop,fRight,
       fBottom: double): TCapabilityRet;
+
+    function GetIndicators(var Value: Boolean): TCapabilityRet;
     function SetIndicators(Value: boolean): TCapabilityRet;
-    {npeter 2004.01.12 end}
+
     {Retrieve the pixel flavor values}
     function GetIPixelFlavor(var Return: TTwainPixelFlavor;
       var Supported: TTwainPixelFlavorSet; Mode: TRetrieveCap
@@ -477,8 +492,11 @@ type
     function GetFeederEnabled(var Return: Boolean): TCapabilityRet;
     function SetFeederEnabled(Value: WordBool): TCapabilityRet;
     {Returns/sets if auto feed is enabled}
-    function GetAutofeed(var Return: Boolean): TCapabilityRet;
+    function GetAutoFeed(var Return: Boolean): TCapabilityRet;
     function SetAutoFeed(Value: WordBool): TCapabilityRet;
+    {Returns/sets if auto Scan is enabled}
+    function GetAutoScan(var Return: Boolean): TCapabilityRet;
+    function SetAutoScan(Value: WordBool): TCapabilityRet;
 
     {Object being created/destroyed}
     constructor Create(AOwner: TCustomDelphiTwain);
@@ -1972,6 +1990,16 @@ begin
   end;
 end;
 
+function TTwainSource.CapabilityCanGet(const Capability: TW_UINT16): Boolean;
+begin
+  Result := (capGet in GetCapabilitySupportedOp(Capability));
+end;
+
+function TTwainSource.CapabilityCanSet(const Capability: TW_UINT16): Boolean;
+begin
+  Result := (capSet in GetCapabilitySupportedOp(Capability));
+end;
+
 {Returns a capability strucutre}
 function TTwainSource.GetCapabilityRec( const Capability: TW_UINT16;
   var Handle: HGLOBAL; Mode: TRetrieveCap;
@@ -2199,42 +2227,160 @@ begin
 end;
 
 {Returns an one value capability}
+function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: Integer; Mode: TRetrieveCap): TCapabilityRet;
+var
+  OneV     : pTW_ONEVALUE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ONEVALUE)
+    then begin
+           //Obtain structure pointer
+           OneV := GlobalLock(MemHandle);
+
+           case OneV^.ItemType of
+           TWTY_INT8   :         Value := pTW_INT8(@OneV^.Item)^;
+           TWTY_UINT8  :         Value := pTW_UINT8(@OneV^.Item)^;
+           TWTY_INT16,
+           44 {TWTY_HANDLE} :    Value := pTW_INT16(@OneV^.Item)^;
+           TWTY_UINT16 :         Value := pTW_UINT16(@OneV^.Item)^;
+           TWTY_INT32  :         Value := pTW_INT32(@OneV^.Item)^;
+           TWTY_UINT32,
+           43 {TWTY_MEMREF} :    Value := pTW_UINT32(@OneV^.Item)^;
+           else Result := crInvalidContainer;
+           end;
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: Extended; Mode: TRetrieveCap): TCapabilityRet;
+var
+  OneV     : pTW_ONEVALUE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ONEVALUE)
+    then begin
+           OneV := GlobalLock(MemHandle);
+
+           if (OneV^.ItemType = TWTY_FIX32)
+           then with pTW_FIX32(@OneV^.Item)^ do
+                Value :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac))
+           else Result := crInvalidContainer;
+
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: Boolean; Mode: TRetrieveCap): TCapabilityRet;
+var
+  OneV     : pTW_ONEVALUE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ONEVALUE)
+    then begin
+           OneV := GlobalLock(MemHandle);
+
+           if (OneV^.ItemType = TWTY_BOOL)
+           then Value :=pTW_BOOL(@OneV^.Item)^
+           else Result := crInvalidContainer;
+
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: String; Mode: TRetrieveCap): TCapabilityRet;
+var
+  OneV     : pTW_ONEVALUE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ONEVALUE)
+    then begin
+           OneV := GlobalLock(MemHandle);
+
+           if (OneV^.ItemType in [TWTY_STR32,TWTY_STR64,TWTY_STR128,TWTY_STR255])
+           then Value := String(PAnsiChar(@OneV^.Item))
+           else Result := crInvalidContainer;
+
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    GlobalFree(MemHandle);
+  end;
+end;
+
 function TTwainSource.GetOneValue(Capability: TW_UINT16;
   var ItemType: TW_UINT16; var Value: string; Mode: TRetrieveCap;
   MemHandle: HGLOBAL): TCapabilityRet;
 var
   OneV     : pTW_ONEVALUE;
   Container: TW_UINT16;
+
 begin
-  {Call method to get the memory to the return}
-  if MemHandle = 0 then
-    Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container)
-  else
-  begin
-    Result := crSuccess;
-    Container := TWON_ONEVALUE;
-  end;
+  if (MemHandle = 0)
+  then Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container)
+  else begin
+         Result := crSuccess;
+         Container := TWON_ONEVALUE;
+       end;
 
-  if (Result = crSuccess) and (Container <> TWON_ONEVALUE) then
-  begin
-    Result := crInvalidContainer;
-    GlobalFree(MemHandle);
-    Exit;
-  end;
-
-  {If result was sucessfull and memory was allocated}
   if (Result = crSuccess) then
   begin
-    {Obtain structure pointer}
-    OneV := GlobalLock(MemHandle);
-    {Fill return}
-    ItemType := OneV^.ItemType;
-    GetItem(Value, OneV^.ItemType, @OneV^.Item);
+    if (Container = TWON_ONEVALUE)
+    then begin
+           //Obtain structure pointer
+           OneV := GlobalLock(MemHandle);
 
-    {Unlock memory and unallocate}
-    GlobalUnlock(MemHandle);
+           //Fill return Values
+           ItemType := OneV^.ItemType;
+           GetItem(Value, OneV^.ItemType, @OneV^.Item);
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory;
     GlobalFree(MemHandle);
-  end {if (Result = crSuccess)}
+  end;
 end;
 
 {Sets an one value capability}
@@ -2269,36 +2415,18 @@ end;
 
 function TTwainSource.GetOrientation(var Value: TTwainOrientation): TCapabilityRet;
 var
-  OneV     : pTW_ONEVALUE;
-  Container: TW_UINT16;
-  MemHandle: HGLOBAL;
+  iValue: Integer;
 
 begin
-  MemHandle:=0;
-  Result := GetCapabilityRec(ICAP_ORIENTATION, MemHandle, rcGet, {%H-}Container);
+  Result := GetOneValue(ICAP_ORIENTATION, iValue, rcGet);
 
-  if (Result = crSuccess) and (Container <> TWTY_UINT16) then
-  begin
-    GlobalFree(MemHandle);
-    Result := crUnsupported;
-    Exit;
-  end;
-
-  {If result was sucessfull and memory was allocated}
   if (Result = crSuccess) then
   begin
-    {Obtain structure pointer}
-    OneV := GlobalLock(MemHandle);
-
-    Case OneV^.Item of
+    Case iValue of
     TWOR_PORTRAIT : Value :=torPortrait;
     TWOR_LANDSCAPE: Value :=torLandscape;
     else Result := crInvalidContainer;
     end;
-
-    {Unlock memory and unallocate}
-    GlobalUnlock(MemHandle);
-    GlobalFree(MemHandle);
   end;
 end;
 
@@ -2327,13 +2455,15 @@ begin
   //Get Initial Feeder State
   capRet :=GetFeederEnabled(feedEnabled);
 
+  //if we can disable the Feeder then the scanner have a Plane
   capRet :=SetFeederEnabled(False);
   if (capRet=crSuccess) then Result :=[pfFlatbed];
 
+  //if we can enable the Feeder then the scanner have it
   capRet :=SetFeederEnabled(True);
   if (capRet=crSuccess) then Result :=Result+[pfFeeder];
 
-  //Set Feeder State to original value
+  //Set Feeder State to original State
   capRet :=SetFeederEnabled(feedEnabled);
 end;
 
@@ -3425,41 +3555,43 @@ var
   ItemType: TW_UINT16;
   Value   : String;
 begin
-  {Try to obtain value and make sure it is of type TW_BOOL}
+ (*oldcode {Try to obtain value and make sure it is of type TW_BOOL}
   Result := GetOneValue(CAP_FEEDERENABLED, {%H-}ItemType, {%H-}Value, rcGet);
   if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
     Result := crUnsupported;
   {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1');
+  if Result = crSuccess then Return := (Value = '1'); *)
+  Result := GetOneValue(CAP_FEEDERENABLED, Return, rcGet);
 end;
 
 {Set if feeder is enabled}
 function TTwainSource.SetFeederEnabled(Value: WordBool): TCapabilityRet;
 begin
-  {Call SetOneValue to set value}
   Result := SetOneValue(CAP_FEEDERENABLED, TWTY_BOOL, @Value);
+
+  //MaxM: to really use feeder we must also set autofeed or autoscan, but only
+  // for one of them since setting autoscan also sets autofeed
+  if CapabilityCanSet(CAP_AUTOSCAN)
+  then Result := SetOneValue(CAP_AUTOSCAN, TWTY_BOOL, @Value)
+  else if CapabilityCanSet(CAP_AUTOFEED)
+       then Result := SetOneValue(CAP_AUTOFEED, TWTY_BOOL, @Value);
 end;
 
 
 {Returns if autofeed is enabled}
-function TTwainSource.GetAutofeed(var Return: Boolean): TCapabilityRet;
+function TTwainSource.GetAutoFeed(var Return: Boolean): TCapabilityRet;
 var
   ItemType: TW_UINT16;
   Value   : String;
 begin
+  (*oldcode
   {Try to obtain value and make sure it is of type TW_BOOL}
   Result := GetOneValue(CAP_AUTOFEED, {%H-}ItemType, {%H-}Value, rcGet);
   if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
     Result := crUnsupported;
   {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1');
-end;
-
-function TTwainSource.SetAutoBorderDetection(Value: Boolean): TCapabilityRet;
-var iValue: TW_BOOL;
-begin
-  iValue := Value;
-  Result := SetOneValue(ICAP_AUTOMATICBORDERDETECTION, TWTY_BOOL, @iValue);
+  if Result = crSuccess then Return := (Value = '1'); *)
+  Result :=GetOneValue(CAP_AUTOFEED, Return, rcGet);
 end;
 
 {Set if autofeed is enabled}
@@ -3469,6 +3601,22 @@ begin
   Result := SetOneValue(CAP_AUTOFEED, TWTY_BOOL, @Value);
 end;
 
+function TTwainSource.GetAutoScan(var Return: Boolean): TCapabilityRet;
+begin
+  Result :=GetOneValue(CAP_AUTOSCAN, Return, rcGet);
+end;
+
+function TTwainSource.SetAutoScan(Value: WordBool): TCapabilityRet;
+begin
+  Result := SetOneValue(CAP_AUTOSCAN, TWTY_BOOL, @Value);
+end;
+
+function TTwainSource.SetAutoBorderDetection(Value: Boolean): TCapabilityRet;
+var iValue: TW_BOOL;
+begin
+  iValue := Value;
+  Result := SetOneValue(ICAP_AUTOMATICBORDERDETECTION, TWTY_BOOL, @iValue);
+end;
 
 function TTwainSource.SetAutoRotate(Value: Boolean): TCapabilityRet;
 var iValue: TW_BOOL;
@@ -3531,6 +3679,11 @@ begin
  {Call method and store return}
  Result := ResultToCapabilityRec(Owner.TwainProc(AppInfo, @Structure,
       DG_IMAGE, DAT_IMAGELAYOUT, MSG_SET, @ImageLayout));
+end;
+
+function TTwainSource.GetIndicators(var Value: Boolean): TCapabilityRet;
+begin
+  Result :=GetOneValue(CAP_INDICATORS, Value, rcGet);
 end;
 
 //npeter: 2004.01.12
