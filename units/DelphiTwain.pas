@@ -24,18 +24,22 @@
 
 {
 CHANGE LOG:
-2023/11    - Fixed various obscurities in code
+2023/12 MaxM - CapabilityCanGet/Set; GetOneValue overloads; GetIndicators; Get/Set AutoScan;
+	     SetFeederEnabled set also AutoScan and AutoFeed;
+	     Paper Feeding Get/Set in TTwainPaperFeedingSet; GetOrientation
+	     GetEnumerationValue overloads; changed params of GetPaperSizeSet, GetIBitDepth; 
+	     CreateWindow Delphi compatibility;
+2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
              Completed TTwainPaperSize enum and set;
              Added PaperSizes in cm; GetTwainPaperSize function;
              GetPaperSizeSet; PaperSizeToTwain as function;
 
-2023/10    - Completely changed the creation scheme
-             Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
-                    DoCreateTimer; DoDestroyTimer; DoMessagesTimer;
-             First Test of VirtualWindow/Timer in Console Application;
-
-2023/10/01 - Control over the functioning of the source code; FindSource overloaded methods
+2023/10 MaxM - Control over the functioning of the source code; FindSource overloaded methods 
+	       Completely changed the creation scheme
+               Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
+                      DoCreateTimer; DoDestroyTimer; DoMessagesTimer;
+               First Test of VirtualWindow/Timer in Console Application;
 
 2014/04/29 - Fix for unloading library cancelling acquire window on Lazarus
              Typo fixes in language constants; cosmetic fixes.
@@ -139,8 +143,11 @@ type
   {Twain bit depth}
   TTwainBitDepth = array of TW_UINT16;
 
+  TArrayExtended = array of Extended;
+  TArrayInteger = array of Integer;
+
   {Twain resolutions}
-  TTwainResolution = array of Extended;
+  TTwainResolution = TArrayExtended;
 
   {Events}
   TOnTwainError = procedure(Sender: TObject; const Index: Integer; ErrorCode,
@@ -263,7 +270,7 @@ type
   TCapabilityOperationSet = set of TCapabilityOperation;
 
   {Capability list type}
-  TGetCapabilityList = array of string;
+  TGetCapabilityList = TStringArray;
   TSetCapabilityList = array of pointer;
 
   TTwainPaperFeeding = (pfFlatbed, pfFeeder);
@@ -373,15 +380,28 @@ type
     function GetRangeValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
       var Min, Max, Step, Default, Current: String;
       MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+
     {Returns an enumeration capability}
+    function GetEnumerationValue(Capability: TW_UINT16;
+      var List:TArrayInteger; var Current, Default: Integer;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+    function GetEnumerationValue(Capability: TW_UINT16;
+      var List:TArrayExtended; var Current, Default: Extended;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+    function GetEnumerationValue(Capability: TW_UINT16;
+      var List:TStringArray; var Current, Default: String;
+      Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
+
     function GetEnumerationValue(Capability: TW_UINT16;
       var ItemType: TW_UINT16; var List: TGetCapabilityList; var Current,
       Default: Integer; Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF};
-      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
+
     {Returns an array capability}
     function GetArrayValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
       var List: TGetCapabilityList; MemHandle: HGLOBAL
       {$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+
     {************************}
     {Sets an one value capability}
     function SetOneValue(Capability: TW_UINT16; ItemType: TW_UINT16;
@@ -444,8 +464,8 @@ type
     function SetPaperFeeding(Value: TTwainPaperFeeding): TCapabilityRet;
 
     {Get Available Paper Sizes}
-    function GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
-                             var PapersList:TTwainPaperSizeSet): TCapabilityRet;
+    function GetPaperSizeSet(var PapersList:TTwainPaperSizeSet;
+                             var Current, Default:TTwainPaperSize): TCapabilityRet;
     {Set paper size}
     function SetPaperSize(Value: TTwainPaperSize): TCapabilityRet;
 
@@ -460,9 +480,8 @@ type
     {Set undefined image size}
     function SetUndefinedImageSize(Value: Boolean): TCapabilityRet;
     {Returns bitdepth values}
-    function GetIBitDepth(var Return: Word;
-      var Supported: TTwainBitDepth; Mode: TRetrieveCap
-      {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+    function GetIBitDepth(var Current, Default: Integer;
+      var Supported: TArrayInteger; Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     {Set current bitdepth value}
     function SetIBitDepth(Value: Word): TCapabilityRet;
     {Returns pixel type values}
@@ -1367,7 +1386,7 @@ var
   ResultReg:Integer;
 
 begin
-  if (Windows.GetClassInfoW(HInstance, @VirtualWinClassName, @WindowClassW)=False) then
+  if (Windows.GetClassInfoW(HInstance, @VirtualWinClassName, {$IFDEF FPC}@{$ENDIF}WindowClassW)=False) then
   begin
     with WindowClassW do
     begin
@@ -2123,13 +2142,174 @@ end;
 
 {Returns an enumeration capability}
 function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
+  var List: TArrayInteger; var Current, Default: Integer; Mode: TRetrieveCap): TCapabilityRet;
+var
+  EnumV    : pTW_ENUMERATION;
+  ItemSize : Integer;
+  Data     : Pointer;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ENUMERATION)
+    then begin
+           EnumV := GlobalLock(MemHandle);
+
+           if (EnumV^.ItemType in [TWTY_INT8,TWTY_UINT8,TWTY_INT16,44 {TWTY_HANDLE},
+                                   TWTY_UINT16,TWTY_INT32,TWTY_UINT32,43 {TWTY_MEMREF}]) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(EnumV^.ItemType);
+             Data := @EnumV^.ItemList[0];
+             SetLength(List, EnumV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to EnumV^.NumItems-1 do
+             begin
+               case EnumV^.ItemType of
+               TWTY_INT8   :      List[CurItem] := pTW_INT8(Data)^;
+               TWTY_UINT8  :      List[CurItem] := pTW_UINT8(Data)^;
+               TWTY_INT16,
+               44 {TWTY_HANDLE} : List[CurItem] := pTW_INT16(Data)^;
+               TWTY_UINT16 :      List[CurItem] := pTW_UINT16(Data)^;
+               TWTY_INT32  :      List[CurItem] := pTW_INT32(Data)^;
+               TWTY_UINT32,
+               43 {TWTY_MEMREF} : List[CurItem] := pTW_UINT32(Data)^;
+               end;
+
+               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
+               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
+  var List: TArrayExtended; var Current, Default: Extended; Mode: TRetrieveCap): TCapabilityRet;
+var
+  EnumV    : pTW_ENUMERATION;
+  ItemSize : Integer;
+  Data     : Pointer;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ENUMERATION)
+    then begin
+           EnumV := GlobalLock(MemHandle);
+
+           if (EnumV^.ItemType = TWTY_FIX32) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(EnumV^.ItemType);
+             Data := @EnumV^.ItemList[0];
+             SetLength(List, EnumV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to EnumV^.NumItems-1 do
+             begin
+               with pTW_FIX32(Data)^ do
+                 List[CurItem] :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac));
+
+               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
+               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
+  var List: TStringArray; var Current, Default: String; Mode: TRetrieveCap): TCapabilityRet;
+var
+  EnumV    : pTW_ENUMERATION;
+  ItemSize : Integer;
+  Data     : Pointer;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, Mode, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ENUMERATION)
+    then begin
+           EnumV := GlobalLock(MemHandle);
+
+           if (EnumV^.ItemType in [TWTY_STR32,TWTY_STR64,TWTY_STR128,TWTY_STR255]) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(EnumV^.ItemType);
+             Data := @EnumV^.ItemList[0];
+             SetLength(List, EnumV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to EnumV^.NumItems-1 do
+             begin
+               List[CurItem] := String(PAnsiChar(Data));
+
+               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
+               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
   var ItemType: TW_UINT16; var List: TGetCapabilityList;
   var Current, Default: Integer; Mode: TRetrieveCap;
   MemHandle: HGLOBAL): TCapabilityRet;
 var
   EnumV    : pTW_ENUMERATION;
   ItemSize : Integer;
-  Data     : PAnsiChar;//ccc
+  Data     : PAnsiChar;
   CurItem  : Integer;
   Value    : String;
   Container: TW_UINT16;
@@ -2167,7 +2347,7 @@ begin
     SetLength(List, EnumV^.NumItems);
 
     {Copy items}
-    for CurItem := 0 TO EnumV^.NumItems - 1 do
+    for CurItem := 0 to EnumV^.NumItems - 1 do
     begin
       {Obtain this item}
       GetItem({%H-}Value, ItemType, Data);
@@ -2472,8 +2652,7 @@ begin
   Result :=SetFeederEnabled((Value=pfFeeder));
 end;
 
-function TTwainSource.GetPaperSizeSet(var PaperSize, PaperSize_Default:TTwainPaperSize;
-                                      var PapersList:TTwainPaperSizeSet):TCapabilityRet;
+function TTwainSource.GetPaperSizeSet(var PapersList:TTwainPaperSizeSet; var Current, Default:TTwainPaperSize):TCapabilityRet;
 var
   EnumV: pTW_ENUMERATION;
   Item: pTW_UINT16;
@@ -2484,8 +2663,8 @@ var
 
 begin
   PapersList:=[];
-  PaperSize:=tpsNONE;
-  PaperSize_Default:=tpsNONE;
+  Current:=tpsNONE;
+  Default:=tpsNONE;
   MemHandle:=0;
   Result := GetCapabilityRec(ICAP_SUPPORTEDSIZES, MemHandle, rcGet, {%H-}Container);
 
@@ -2513,8 +2692,8 @@ begin
       begin
         curVal:=TWSS_ToTwainPaperSize(Item^);
 
-        if (CurItem=EnumV^.CurrentIndex) then PaperSize:=curVal;
-        if (CurItem=EnumV^.DefaultIndex) then PaperSize_Default:=curVal;
+        if (CurItem=EnumV^.CurrentIndex) then Current:=curVal;
+        if (CurItem=EnumV^.DefaultIndex) then Default:=curVal;
 
         PapersList :=PapersList+[curVal];
 
@@ -3356,14 +3535,15 @@ begin
 end;
 
 {Returns bitdepth values}
-function TTwainSource.GetIBitDepth(var Return: Word;
-  var Supported: TTwainBitDepth; Mode: TRetrieveCap): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  List    : TGetCapabilityList;
-  Current, i,
-  Default : Integer;
+function TTwainSource.GetIBitDepth(var Current, Default: Integer;
+  var Supported: TArrayInteger; Mode: TRetrieveCap): TCapabilityRet;
+//var
+ // ItemType: TW_UINT16;
+ // List    : TGetCapabilityList;
+ // Current, i,
+ // Default : Integer;
 begin
+(*oldcode
   {Call GetOneValue to obtain this property}
   Result := GetEnumerationValue(ICAP_BITDEPTH, {%H-}ItemType, {%H-}List, {%H-}Current,
     {%H-}Default, Mode);
@@ -3380,6 +3560,7 @@ begin
     if Mode = rcGetDefault then Return := StrToIntDef(List[Default], -1)
     else Return := StrToIntDef(List[Current], -1);
   end {if Result = crSuccess}
+*) Result := GetEnumerationValue(ICAP_BITDEPTH, Supported, Current, Default, Mode);
 end;
 
 {Set current bitdepth value}
@@ -3551,9 +3732,9 @@ end;
 
 {Returns if feeder is enabled}
 function TTwainSource.GetFeederEnabled(var Return: Boolean): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  Value   : String;
+//var
+//  ItemType: TW_UINT16;
+//  Value   : String;
 begin
  (*oldcode {Try to obtain value and make sure it is of type TW_BOOL}
   Result := GetOneValue(CAP_FEEDERENABLED, {%H-}ItemType, {%H-}Value, rcGet);
@@ -3580,9 +3761,9 @@ end;
 
 {Returns if autofeed is enabled}
 function TTwainSource.GetAutoFeed(var Return: Boolean): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  Value   : String;
+//var
+//  ItemType: TW_UINT16;
+//  Value   : String;
 begin
   (*oldcode
   {Try to obtain value and make sure it is of type TW_BOOL}
