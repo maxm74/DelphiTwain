@@ -29,6 +29,11 @@ CHANGE LOG:
 	     Paper Feeding Get/Set in TTwainPaperFeedingSet; GetOrientation
 	     GetEnumerationValue overloads; changed params of GetPaperSizeSet, GetIBitDepth; 
 	     CreateWindow Delphi compatibility;
+             GetRangeValue,GetArrayValue,SetOneValue overload;
+             Use of Fix32ToFloat intestead of StrToFloat;
+             Use of overloaded methods in code (to remove annoying repetitions)
+             RangeCeckError Off in Fix32ToFloat/FloatToFix32
+             Delphi compatibility;
 2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
              Completed TTwainPaperSize enum and set;
@@ -92,6 +97,11 @@ const
   ('D', 'e', 'l', 'p', 'h', 'i','T', 'w', 'a', 'i', 'n', 'P', 'a', 'c', 'k', #0);
 
 type
+  //Dinamic Array types
+  TArrayExtended = array of Extended;
+  TArrayInteger = array of Integer;
+  TStringArray = array of String;
+
   {From twain}
   TW_STR255 = Twain.TW_STR255;
 
@@ -142,9 +152,6 @@ type
 
   {Twain bit depth}
   TTwainBitDepth = array of TW_UINT16;
-
-  TArrayExtended = array of Extended;
-  TArrayInteger = array of Integer;
 
   {Twain resolutions}
   TTwainResolution = TArrayExtended;
@@ -270,7 +277,6 @@ type
   TCapabilityOperationSet = set of TCapabilityOperation;
 
   {Capability list type}
-  TGetCapabilityList = TStringArray;
   TSetCapabilityList = array of pointer;
 
   TTwainPaperFeeding = (pfFlatbed, pfFeeder);
@@ -377,9 +383,13 @@ type
       MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
 
     {Returns an range capability}
+    function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:Integer): TCapabilityRet; overload;
+    function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:Extended): TCapabilityRet; overload;
+    function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:String): TCapabilityRet; overload;
+
     function GetRangeValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
       var Min, Max, Step, Default, Current: String;
-      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+      MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
 
     {Returns an enumeration capability}
     function GetEnumerationValue(Capability: TW_UINT16;
@@ -393,19 +403,26 @@ type
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
 
     function GetEnumerationValue(Capability: TW_UINT16;
-      var ItemType: TW_UINT16; var List: TGetCapabilityList; var Current,
+      var ItemType: TW_UINT16; var List: TStringArray; var Current,
       Default: Integer; Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF};
       MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
 
     {Returns an array capability}
+    function GetArrayValue(Capability: TW_UINT16; var List:TArrayInteger): TCapabilityRet; overload;
+    function GetArrayValue(Capability: TW_UINT16; var List:TArrayExtended): TCapabilityRet; overload;
+    function GetArrayValue(Capability: TW_UINT16; var List:TStringArray): TCapabilityRet; overload;
+
     function GetArrayValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
-      var List: TGetCapabilityList; MemHandle: HGLOBAL
-      {$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet;
+      var List: TStringArray; MemHandle: HGLOBAL{$IFDEF DEFAULTPARAM}=0{$ENDIF}): TCapabilityRet; overload;
 
     {************************}
     {Sets an one value capability}
+    function SetOneValue(Capability: TW_UINT16; Value: Extended): TCapabilityRet; overload;
+    function SetOneValue(Capability: TW_UINT16; Value: Boolean): TCapabilityRet; overload;
+
     function SetOneValue(Capability: TW_UINT16; ItemType: TW_UINT16;
-      Value: Pointer): TCapabilityRet;
+      Value: Pointer): TCapabilityRet; overload;
+
     {Sets a range capability}
     function SetRangeValue(Capability, ItemType: TW_UINT16; Min, Max, Step,
       Current: TW_UINT32): TCapabilityRet;
@@ -427,12 +444,14 @@ type
 
     {Returns return status information}
     function GetReturnStatus(): TW_UINT16;
+
     {Capability setting}
     {Set the number of images that the application wants to receive}
     function SetCapXferCount(Value: SmallInt): TCapabilityRet;
     {Returns the number of images that the source will return}
     function GetCapXferCount(var Return: SmallInt;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+
     {Retrieve the unit measure for all quantities}
     function GetICapUnits(var Return: TTwainUnit;
       var Supported: TTwainUnitSet; Mode: TRetrieveCap
@@ -444,7 +463,7 @@ type
       fBottom: double): TCapabilityRet;
 
     function GetIndicators(var Value: Boolean): TCapabilityRet;
-    function SetIndicators(Value: boolean): TCapabilityRet;
+    function SetIndicators(Value: Boolean): TCapabilityRet;
 
     {Retrieve the pixel flavor values}
     function GetIPixelFlavor(var Return: TTwainPixelFlavor;
@@ -471,25 +490,32 @@ type
 
     {Set auto size}
     function SetAutoSize(Value: TTwainAutoSize): TCapabilityRet;
+
     {Set auto border detection}
     function SetAutoBorderDetection(Value: Boolean): TCapabilityRet;
+
     {Set auto rotate}
     function SetAutoRotate(Value: Boolean): TCapabilityRet;
+
     {Set auto Deskew}
     function SetAutoDeskew(Value: Boolean): TCapabilityRet;
+
     {Set undefined image size}
     function SetUndefinedImageSize(Value: Boolean): TCapabilityRet;
+
     {Returns bitdepth values}
     function GetIBitDepth(var Current, Default: Integer;
       var Supported: TArrayInteger; Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     {Set current bitdepth value}
     function SetIBitDepth(Value: Word): TCapabilityRet;
+
     {Returns pixel type values}
     function GetIPixelType(var Return: TTwainPixelType;
       var Supported: TTwainPixelTypeSet; Mode: TRetrieveCap
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     {Set the pixel type value}
     function SetIPixelType(Value: TTwainPixelType): TCapabilityRet;
+
     {Returns X and Y resolutions}
     function GetIXResolution(var Return: Extended; var Values: TTwainResolution;
       Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
@@ -498,24 +524,37 @@ type
     {Sets X and X resolutions}
     function SetIXResolution(Value: Extended): TCapabilityRet;
     function SetIYResolution(Value: Extended): TCapabilityRet;
+
     {Returns physical width and height}
     function GetIPhysicalWidth(var Return: Extended; Mode: TRetrieveCap
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
     function GetIPhysicalHeight(var Return: Extended; Mode: TRetrieveCap
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+
     {Returns if user interface is controllable}
     function GetUIControllable(var Return: Boolean): TCapabilityRet;
+
     {Returns feeder is loaded or not}
     function GetFeederLoaded(var Return: Boolean): TCapabilityRet;
     {Returns/sets if feeder is enabled}
     function GetFeederEnabled(var Return: Boolean): TCapabilityRet;
-    function SetFeederEnabled(Value: WordBool): TCapabilityRet;
+    function SetFeederEnabled(Value: Boolean): TCapabilityRet;
+
     {Returns/sets if auto feed is enabled}
     function GetAutoFeed(var Return: Boolean): TCapabilityRet;
-    function SetAutoFeed(Value: WordBool): TCapabilityRet;
+    function SetAutoFeed(Value: Boolean): TCapabilityRet;
+
     {Returns/sets if auto Scan is enabled}
     function GetAutoScan(var Return: Boolean): TCapabilityRet;
-    function SetAutoScan(Value: WordBool): TCapabilityRet;
+    function SetAutoScan(Value: Boolean): TCapabilityRet;
+
+    //Get/set Contrast
+    function GetContrast(var Return: Extended): TCapabilityRet;
+    function SetContrast(Value: Extended): TCapabilityRet;
+
+    //Get/set Contrast
+    function GetBrightness(var Return: Extended): TCapabilityRet;
+    function SetBrightness(Value: Extended): TCapabilityRet;
 
     {Object being created/destroyed}
     constructor Create(AOwner: TCustomDelphiTwain);
@@ -860,8 +899,6 @@ end;
 
 function PaperSizeToTwain(AValue: TTwainPaperSize): TW_UINT16;
 begin
-  Result:=0;
-
   if (AValue<tpsUSLEDGER)
   then Result :=TW_UINT16(AValue)
   else Result :=TW_UINT16(AValue)+1;
@@ -1383,7 +1420,6 @@ procedure TCustomDelphiTwain.DoCreateVirtualWindow;
   //fVirtualWindow := Classes.AllocateHWnd(WndProc);
 var
   WindowClassW: WndClassW;
-  ResultReg:Integer;
 
 begin
   if (Windows.GetClassInfoW(HInstance, @VirtualWinClassName, {$IFDEF FPC}@{$ENDIF}WindowClassW)=False) then
@@ -1401,7 +1437,7 @@ begin
       LPSzClassName := @VirtualWinClassName;
     end;
     WindowClassW.hInstance :=HInstance;
-    ResultReg :=Windows.RegisterClassW(WindowClassW);
+    Windows.RegisterClassW(WindowClassW);
   end;
 
   fVirtualWindow :=CreateWindowExW(0, @VirtualWinClassName, @VirtualWinClassName,
@@ -1544,13 +1580,11 @@ end;
 function TCustomDelphiTwain.FindSource(AProductName: String): Integer;
 var
   i      :Integer;
-  curStr :TTwainSource;
 
 begin
   Result :=-1;
   for i:=0 to SourceCount-1 do
   begin
-    curStr:=Source[i];
     { #todo -oMaxM : if there is more identical scanner? }
     if (Source[i].ProductName=AProductName)
     then begin Result:=i; break; end;
@@ -2082,13 +2116,161 @@ begin
 end;
 
 {Returns an array capability}
+function TTwainSource.GetArrayValue(Capability: TW_UINT16; var List: TArrayInteger): TCapabilityRet;
+var
+  ArrayV   : pTW_ARRAY;
+  ItemSize : Integer;
+  Data     : PAnsiChar;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ARRAY)
+    then begin
+           ArrayV := GlobalLock(MemHandle);
+
+           if (ArrayV^.ItemType in [TWTY_INT8,TWTY_UINT8,TWTY_INT16,44 {TWTY_HANDLE},
+                                    TWTY_UINT16,TWTY_INT32,TWTY_UINT32,43 {TWTY_MEMREF}]) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(ArrayV^.ItemType);
+             Data := @ArrayV^.ItemList[0];
+             SetLength(List, ArrayV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to ArrayV^.NumItems-1 do
+             begin
+               case ArrayV^.ItemType of
+               TWTY_INT8   :      List[CurItem] := pTW_INT8(Data)^;
+               TWTY_UINT8  :      List[CurItem] := pTW_UINT8(Data)^;
+               TWTY_INT16,
+               44 {TWTY_HANDLE} : List[CurItem] := pTW_INT16(Data)^;
+               TWTY_UINT16 :      List[CurItem] := pTW_UINT16(Data)^;
+               TWTY_INT32  :      List[CurItem] := pTW_INT32(Data)^;
+               TWTY_UINT32,
+               43 {TWTY_MEMREF} : List[CurItem] := pTW_UINT32(Data)^;
+               end;
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetArrayValue(Capability: TW_UINT16; var List: TArrayExtended): TCapabilityRet;
+var
+  ArrayV   : pTW_ARRAY;
+  ItemSize : Integer;
+  Data     : PChar;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ARRAY)
+    then begin
+           ArrayV := GlobalLock(MemHandle);
+
+           if (ArrayV^.ItemType = TWTY_FIX32) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(ArrayV^.ItemType);
+             Data := @ArrayV^.ItemList[0];
+             SetLength(List, ArrayV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to ArrayV^.NumItems-1 do
+             begin
+               List[CurItem] :=Fix32ToFloat(pTW_FIX32(Data)^);
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetArrayValue(Capability: TW_UINT16; var List: TStringArray): TCapabilityRet;
+var
+  ArrayV   : pTW_ARRAY;
+  ItemSize : Integer;
+  Data     : PAnsiChar;
+  CurItem  : Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_ARRAY)
+    then begin
+           ArrayV := GlobalLock(MemHandle);
+
+           if (ArrayV^.ItemType in [TWTY_STR32,TWTY_STR64,TWTY_STR128,TWTY_STR255]) then
+           begin
+             {Prepare to list items}
+             ItemSize := TWTypeSize(ArrayV^.ItemType);
+             Data := @ArrayV^.ItemList[0];
+             SetLength(List, ArrayV^.NumItems);
+
+             {Copy items}
+             for CurItem := 0 to ArrayV^.NumItems-1 do
+             begin
+               List[CurItem] := String(Data);
+
+               {Move memory to the next}
+               inc(Data, ItemSize);
+             end;
+
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
+         else Result := crInvalidContainer;
+      end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
 function TTwainSource.GetArrayValue(Capability: TW_UINT16;
-  var ItemType: TW_UINT16; var List: TGetCapabilityList;
+  var ItemType: TW_UINT16; var List: TStringArray;
   MemHandle: HGLOBAL): TCapabilityRet;
 var
   ArrayV   : pTW_ARRAY;
   ItemSize : Integer;
-  Data     : PAnsiChar;//ccc
+  Data     : PAnsiChar;
   CurItem  : Integer;
   Value    : String;
   Container: TW_UINT16;
@@ -2146,7 +2328,7 @@ function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
 var
   EnumV    : pTW_ENUMERATION;
   ItemSize : Integer;
-  Data     : Pointer;
+  Data     : PAnsiChar;
   CurItem  : Integer;
   Container: TW_UINT16;
   MemHandle: HGLOBAL;
@@ -2182,16 +2364,15 @@ begin
                43 {TWTY_MEMREF} : List[CurItem] := pTW_UINT32(Data)^;
                end;
 
-               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
-               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
-
                {Move memory to the next}
                inc(Data, ItemSize);
              end;
+             Current :=List[EnumV^.CurrentIndex];
+             Default :=List[EnumV^.DefaultIndex];
 
-           //Unlock memory
-           GlobalUnlock(MemHandle);
-         end
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
          else Result := crInvalidContainer;
       end
     else Result := crInvalidContainer;
@@ -2206,7 +2387,7 @@ function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
 var
   EnumV    : pTW_ENUMERATION;
   ItemSize : Integer;
-  Data     : Pointer;
+  Data     : PChar;
   CurItem  : Integer;
   Container: TW_UINT16;
   MemHandle: HGLOBAL;
@@ -2230,19 +2411,17 @@ begin
              {Copy items}
              for CurItem := 0 to EnumV^.NumItems-1 do
              begin
-               with pTW_FIX32(Data)^ do
-                 List[CurItem] :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac));
-
-               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
-               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
+               List[CurItem] :=Fix32ToFloat(pTW_FIX32(Data)^);
 
                {Move memory to the next}
                inc(Data, ItemSize);
              end;
+             Current :=List[EnumV^.CurrentIndex];
+             Default :=List[EnumV^.DefaultIndex];
 
-           //Unlock memory
-           GlobalUnlock(MemHandle);
-         end
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
          else Result := crInvalidContainer;
       end
     else Result := crInvalidContainer;
@@ -2257,7 +2436,7 @@ function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
 var
   EnumV    : pTW_ENUMERATION;
   ItemSize : Integer;
-  Data     : Pointer;
+  Data     : PAnsiChar;
   CurItem  : Integer;
   Container: TW_UINT16;
   MemHandle: HGLOBAL;
@@ -2281,18 +2460,17 @@ begin
              {Copy items}
              for CurItem := 0 to EnumV^.NumItems-1 do
              begin
-               List[CurItem] := String(PAnsiChar(Data));
-
-               if (CurItem=EnumV^.CurrentIndex) then Current :=List[CurItem];
-               if (CurItem=EnumV^.DefaultIndex) then Default :=List[CurItem];
+               List[CurItem] := String(Data);
 
                {Move memory to the next}
                inc(Data, ItemSize);
              end;
+             Current :=List[EnumV^.CurrentIndex];
+             Default :=List[EnumV^.DefaultIndex];
 
-           //Unlock memory
-           GlobalUnlock(MemHandle);
-         end
+             //Unlock memory
+             GlobalUnlock(MemHandle);
+          end
          else Result := crInvalidContainer;
       end
     else Result := crInvalidContainer;
@@ -2303,7 +2481,7 @@ begin
 end;
 
 function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
-  var ItemType: TW_UINT16; var List: TGetCapabilityList;
+  var ItemType: TW_UINT16; var List: TStringArray;
   var Current, Default: Integer; Mode: TRetrieveCap;
   MemHandle: HGLOBAL): TCapabilityRet;
 var
@@ -2364,6 +2542,147 @@ begin
 end;
 
 {Returns a range capability}
+function TTwainSource.GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current: Integer): TCapabilityRet;
+var
+  RangeV   : pTW_RANGE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_RANGE)
+    then begin
+           //Obtain structure pointer
+           RangeV := GlobalLock(MemHandle);
+
+           case RangeV^.ItemType of
+           TWTY_INT8   : begin
+                           Min := pTW_INT8(@RangeV^.MinValue)^;
+                           Max := pTW_INT8(@RangeV^.MaxValue)^;
+                           Step := pTW_INT8(@RangeV^.StepSize)^;
+                           Default := pTW_INT8(@RangeV^.DefaultValue)^;
+                           Current := pTW_INT8(@RangeV^.CurrentValue)^;
+                         end;
+           TWTY_UINT8  : begin
+                           Min := pTW_UINT8(@RangeV^.MinValue)^;
+                           Max := pTW_UINT8(@RangeV^.MaxValue)^;
+                           Step := pTW_UINT8(@RangeV^.StepSize)^;
+                           Default := pTW_UINT8(@RangeV^.DefaultValue)^;
+                           Current := pTW_UINT8(@RangeV^.CurrentValue)^;
+                         end;
+           TWTY_INT16, {TWTY_HANDLE}
+           44          : begin
+                           Min := pTW_INT16(@RangeV^.MinValue)^;
+                           Max := pTW_INT16(@RangeV^.MaxValue)^;
+                           Step := pTW_INT16(@RangeV^.StepSize)^;
+                           Default := pTW_INT16(@RangeV^.DefaultValue)^;
+                           Current := pTW_INT16(@RangeV^.CurrentValue)^;
+                         end;
+           TWTY_UINT16 : begin
+                           Min := pTW_UINT16(@RangeV^.MinValue)^;
+                           Max := pTW_UINT16(@RangeV^.MaxValue)^;
+                           Step := pTW_UINT16(@RangeV^.StepSize)^;
+                           Default := pTW_UINT16(@RangeV^.DefaultValue)^;
+                           Current := pTW_UINT16(@RangeV^.CurrentValue)^;
+                         end;
+           TWTY_INT32  : begin
+                           Min := pTW_INT32(@RangeV^.MinValue)^;
+                           Max := pTW_INT32(@RangeV^.MaxValue)^;
+                           Step := pTW_INT32(@RangeV^.StepSize)^;
+                           Default := pTW_INT32(@RangeV^.DefaultValue)^;
+                           Current := pTW_INT32(@RangeV^.CurrentValue)^;
+                         end;
+           TWTY_UINT32, {TWTY_MEMREF}
+           43           : begin
+                           Min := pTW_UINT32(@RangeV^.MinValue)^;
+                           Max := pTW_UINT32(@RangeV^.MaxValue)^;
+                           Step := pTW_UINT32(@RangeV^.StepSize)^;
+                           Default := pTW_UINT32(@RangeV^.DefaultValue)^;
+                           Current := pTW_UINT32(@RangeV^.CurrentValue)^;
+                         end;
+           else Result := crInvalidContainer;
+           end;
+
+           //Unlock memory
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    //Unallocate memory
+    GlobalFree(MemHandle);
+  end;
+end;
+
+function TTwainSource.GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current: Extended): TCapabilityRet;
+var
+  RangeV   : pTW_RANGE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_RANGE)
+    then begin
+           RangeV := GlobalLock(MemHandle);
+
+           if (RangeV^.ItemType = TWTY_FIX32)
+           then begin
+                  Min :=Fix32ToFloat(pTW_FIX32(@RangeV^.MinValue)^);
+                  Max :=Fix32ToFloat(pTW_FIX32(@RangeV^.MaxValue)^);
+                  Step :=Fix32ToFloat(pTW_FIX32(@RangeV^.StepSize)^);
+                  Default :=Fix32ToFloat(pTW_FIX32(@RangeV^.DefaultValue)^);
+                  Current :=Fix32ToFloat(pTW_FIX32(@RangeV^.CurrentValue)^);
+                end
+           else Result := crInvalidContainer;
+
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    GlobalFree(MemHandle);
+  end;
+end;
+
+//MaxM: not to be confused with the following method, this one works on a string range (which might not make much sense)
+function TTwainSource.GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current: String): TCapabilityRet;
+var
+  RangeV   : pTW_RANGE;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+
+begin
+  MemHandle :=0;
+  Result := GetCapabilityRec(Capability, MemHandle, rcGet, {%H-}Container);
+  if (Result = crSuccess) then
+  begin
+    if (Container = TWON_RANGE)
+    then begin
+           RangeV := GlobalLock(MemHandle);
+
+           if (RangeV^.ItemType in [TWTY_STR32,TWTY_STR64,TWTY_STR128,TWTY_STR255])
+           then begin
+                  Min := String(PAnsiChar(@RangeV^.MinValue));
+                  Max := String(PAnsiChar(@RangeV^.MaxValue));
+                  Step := String(PAnsiChar(@RangeV^.StepSize));
+                  Default := String(PAnsiChar(@RangeV^.DefaultValue));
+                  Current := String(PAnsiChar(@RangeV^.CurrentValue));
+                end
+           else Result := crInvalidContainer;
+
+           GlobalUnlock(MemHandle);
+         end
+    else Result := crInvalidContainer;
+
+    GlobalFree(MemHandle);
+  end;
+end;
+
 function TTwainSource.GetRangeValue(Capability: TW_UINT16;
   var ItemType: TW_UINT16; var Min, Max, Step, Default,
   Current: String; MemHandle: HGLOBAL): TCapabilityRet;
@@ -2461,8 +2780,9 @@ begin
            OneV := GlobalLock(MemHandle);
 
            if (OneV^.ItemType = TWTY_FIX32)
-           then with pTW_FIX32(@OneV^.Item)^ do
-                Value :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac))
+           then (* with pTW_FIX32(@OneV^.Item)^ do
+                Value :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac))*)
+                Value := Fix32ToFloat(pTW_FIX32(@OneV^.Item)^)
            else Result := crInvalidContainer;
 
            GlobalUnlock(MemHandle);
@@ -2564,6 +2884,24 @@ begin
 end;
 
 {Sets an one value capability}
+function TTwainSource.SetOneValue(Capability: TW_UINT16; Value: Extended): TCapabilityRet;
+var
+  Fix32: TW_FIX32;
+
+begin
+  Fix32 := FloatToFix32(Value);
+  Result := SetOneValue(Capability, TWTY_FIX32, @Fix32);
+end;
+
+function TTwainSource.SetOneValue(Capability: TW_UINT16; Value: Boolean): TCapabilityRet;
+var
+   iValue: TW_BOOL;
+
+begin
+  iValue := Value;
+  Result := SetOneValue(Capability, TWTY_BOOL, @iValue);
+end;
+
 function TTwainSource.SetOneValue(Capability: TW_UINT16;
   ItemType: TW_UINT16; Value: Pointer): TCapabilityRet;
 var
@@ -2625,9 +2963,7 @@ end;
 function TTwainSource.GetPaperFeeding: TTwainPaperFeedingSet;
 var
    capRet: TCapabilityRet;
-   feedEnabled,
-   haveFlat,
-   haveFeed: Boolean;
+   feedEnabled: Boolean;
 
 begin
   Result :=[];
@@ -3409,7 +3745,7 @@ function TTwainSource.GetICapUnits(var Return: TTwainUnit;
   var Supported: TTwainUnitSet; Mode: TRetrieveCap): TCapabilityRet;
 var
   ItemType: TW_UINT16;
-  List    : TGetCapabilityList;
+  List    : TStringArray;
   Current, i,
   Default : Integer;
 begin
@@ -3438,7 +3774,7 @@ function TTwainSource.GetIPixelFlavor(var Return: TTwainPixelFlavor;
   var Supported: TTwainPixelFlavorSet; Mode: TRetrieveCap): TCapabilityRet;
 var
   ItemType: TW_UINT16;
-  List    : TGetCapabilityList;
+  List    : TStringArray;
   Current, i,
   Default : Integer;
 begin
@@ -3498,7 +3834,7 @@ function TTwainSource.GetIPixelType(var Return: TTwainPixelType;
   var Supported: TTwainPixelTypeSet; Mode: TRetrieveCap): TCapabilityRet;
 var
   ItemType: TW_UINT16;
-  List    : TGetCapabilityList;
+  List    : TStringArray;
   Current, i,
   Default : Integer;
 begin
@@ -3539,7 +3875,7 @@ function TTwainSource.GetIBitDepth(var Current, Default: Integer;
   var Supported: TArrayInteger; Mode: TRetrieveCap): TCapabilityRet;
 //var
  // ItemType: TW_UINT16;
- // List    : TGetCapabilityList;
+ // List    : TStringArray;
  // Current, i,
  // Default : Integer;
 begin
@@ -3577,6 +3913,7 @@ var
   OneV  : pTW_ONEVALUE;
   Container: TW_UINT16;
 begin
+(*oldcode
   {Obtain handle to data from this capability}
   Result := GetCapabilityRec(ICAP_PHYSICALWIDTH, {%H-}Handle, {%H-}Mode, {%H-}Container);
   if Result = crSuccess then
@@ -3589,6 +3926,8 @@ begin
     GlobalUnlock(Handle);
     GlobalFree(Handle);
   end;
+  *)
+  Result :=GetOneValue(ICAP_PHYSICALWIDTH, Return, Mode);
 end;
 
 {Returns physical height}
@@ -3599,6 +3938,7 @@ var
   OneV  : pTW_ONEVALUE;
   Container: TW_UINT16;
 begin
+(*oldcode
   {Obtain handle to data from this capability}
   Result := GetCapabilityRec(ICAP_PHYSICALHEIGHT, {%H-}Handle, {%H-}Mode, {%H-}Container);
   if Result = crSuccess then
@@ -3611,6 +3951,8 @@ begin
     GlobalUnlock(Handle);
     GlobalFree(Handle);
   end;
+  *)
+  Result :=GetOneValue(ICAP_PHYSICALHEIGHT, Return, Mode);
 end;
 
 {Returns a resolution}
@@ -3672,20 +4014,14 @@ end;
 
 {Sets X resolution}
 function TTwainSource.SetIXResolution(Value: Extended): TCapabilityRet;
-var
-  Fix32: TW_FIX32;
 begin
-  Fix32 := FloatToFix32(Value);
-  Result := SetOneValue(ICAP_XRESOLUTION, TWTY_FIX32, @Fix32);
+  Result := SetOneValue(ICAP_XRESOLUTION, Value);
 end;
 
 {Sets Y resolution}
 function TTwainSource.SetIYResolution(Value: Extended): TCapabilityRet;
-var
-  Fix32: TW_FIX32;
 begin
-  Fix32 := FloatToFix32(Value);
-  Result := SetOneValue(ICAP_YRESOLUTION, TWTY_FIX32, @Fix32);
+  Result := SetOneValue(ICAP_YRESOLUTION, Value);
 end;
 
 {Returns X resolution}
@@ -3708,12 +4044,15 @@ var
   ItemType: TW_UINT16;
   Value   : String;
 begin
+  (*oldcode
   {Try to obtain value and make sure it is of type TW_BOOL}
   Result := GetOneValue(CAP_UICONTROLLABLE, {%H-}ItemType, {%H-}Value, rcGet);
   if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
     Result := crUnsupported;
   {Return value, by checked the return value from GetOneValue}
   if Result = crSuccess then Return := (Value = '1');
+  *)
+  Result :=GetOneValue(CAP_UICONTROLLABLE, Return, rcGet);
 end;
 
 {Returns if feeder is loaded}
@@ -3722,12 +4061,14 @@ var
   ItemType: TW_UINT16;
   Value   : String;
 begin
+  (*oldcode
   {Try to obtain value and make sure it is of type TW_BOOL}
   Result := GetOneValue(CAP_FEEDERLOADED, {%H-}ItemType, {%H-}Value, rcGet);
   if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
     Result := crUnsupported;
   {Return value, by checked the return value from GetOneValue}
   if Result = crSuccess then Return := (Value = '1');
+  *) Result :=GetOneValue(CAP_FEEDERLOADED, Return, rcGet);
 end;
 
 {Returns if feeder is enabled}
@@ -3746,18 +4087,17 @@ begin
 end;
 
 {Set if feeder is enabled}
-function TTwainSource.SetFeederEnabled(Value: WordBool): TCapabilityRet;
+function TTwainSource.SetFeederEnabled(Value: Boolean): TCapabilityRet;
 begin
-  Result := SetOneValue(CAP_FEEDERENABLED, TWTY_BOOL, @Value);
+  Result := SetOneValue(CAP_FEEDERENABLED, Value);
 
   //MaxM: to really use feeder we must also set autofeed or autoscan, but only
   // for one of them since setting autoscan also sets autofeed
   if CapabilityCanSet(CAP_AUTOSCAN)
-  then Result := SetOneValue(CAP_AUTOSCAN, TWTY_BOOL, @Value)
+  then Result := SetOneValue(CAP_AUTOSCAN, Value)
   else if CapabilityCanSet(CAP_AUTOFEED)
-       then Result := SetOneValue(CAP_AUTOFEED, TWTY_BOOL, @Value);
+       then Result := SetOneValue(CAP_AUTOFEED, Value);
 end;
-
 
 {Returns if autofeed is enabled}
 function TTwainSource.GetAutoFeed(var Return: Boolean): TCapabilityRet;
@@ -3776,10 +4116,9 @@ begin
 end;
 
 {Set if autofeed is enabled}
-function TTwainSource.SetAutoFeed(Value: WordBool): TCapabilityRet;
+function TTwainSource.SetAutoFeed(Value: Boolean): TCapabilityRet;
 begin
-  {Call SetOneValue to set value}
-  Result := SetOneValue(CAP_AUTOFEED, TWTY_BOOL, @Value);
+  Result := SetOneValue(CAP_AUTOFEED, Value);
 end;
 
 function TTwainSource.GetAutoScan(var Return: Boolean): TCapabilityRet;
@@ -3787,30 +4126,44 @@ begin
   Result :=GetOneValue(CAP_AUTOSCAN, Return, rcGet);
 end;
 
-function TTwainSource.SetAutoScan(Value: WordBool): TCapabilityRet;
+function TTwainSource.SetAutoScan(Value: Boolean): TCapabilityRet;
 begin
-  Result := SetOneValue(CAP_AUTOSCAN, TWTY_BOOL, @Value);
+  Result := SetOneValue(CAP_AUTOSCAN, Value);
+end;
+
+function TTwainSource.GetContrast(var Return: Extended): TCapabilityRet;
+begin
+  Result :=GetOneValue(ICAP_CONTRAST, Return, rcGet);
+end;
+
+function TTwainSource.SetContrast(Value: Extended): TCapabilityRet;
+begin
+  Result := SetOneValue(ICAP_CONTRAST, Value);
+end;
+
+function TTwainSource.GetBrightness(var Return: Extended): TCapabilityRet;
+begin
+  Result :=GetOneValue(ICAP_BRIGHTNESS, Return, rcGet);
+end;
+
+function TTwainSource.SetBrightness(Value: Extended): TCapabilityRet;
+begin
+ Result := SetOneValue(ICAP_BRIGHTNESS, Value);
 end;
 
 function TTwainSource.SetAutoBorderDetection(Value: Boolean): TCapabilityRet;
-var iValue: TW_BOOL;
 begin
-  iValue := Value;
-  Result := SetOneValue(ICAP_AUTOMATICBORDERDETECTION, TWTY_BOOL, @iValue);
+  Result := SetOneValue(ICAP_AUTOMATICBORDERDETECTION, Value);
 end;
 
 function TTwainSource.SetAutoRotate(Value: Boolean): TCapabilityRet;
-var iValue: TW_BOOL;
 begin
-  iValue := Value;
-  Result := SetOneValue(ICAP_AUTOMATICROTATE, TWTY_BOOL, @iValue);
+  Result := SetOneValue(ICAP_AUTOMATICROTATE, Value);
 end;
 
 function TTwainSource.SetAutoDeskew(Value: Boolean): TCapabilityRet;
-var iValue: TW_BOOL;
 begin
-  iValue := Value;
-  Result := SetOneValue(ICAP_AUTOMATICDESKEW, TWTY_BOOL, @iValue);
+  Result := SetOneValue(ICAP_AUTOMATICDESKEW, Value);
 end;
 
 function TTwainSource.SetAutoSize(Value: TTwainAutoSize): TCapabilityRet;
@@ -3869,10 +4222,9 @@ end;
 
 //npeter: 2004.01.12
 //enable/disable progress indicators
-function TTwainSource.SetIndicators(Value: boolean): TCapabilityRet;
+function TTwainSource.SetIndicators(Value: Boolean): TCapabilityRet;
 begin
-  {Call SetOneValue to set value}
-  Result := SetOneValue(CAP_INDICATORS, TWTY_BOOL, @Value);
+  Result := SetOneValue(CAP_INDICATORS, Value);
 end;
 
 end.

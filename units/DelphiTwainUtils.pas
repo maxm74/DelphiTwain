@@ -98,9 +98,12 @@ function FloatToFix32 (floater: extended): TW_FIX32;
 var
   i32: Cardinal;
 begin
+  //{$PUSH}
+  {$R-}
   i32 := Round(floater * 65536.0);
   Result.Whole := i32 shr 16;
   Result.Frac := i32 and $ffff;
+  //{$POP}
 end;
 {function FloatToFix32 (floater: extended): TW_FIX32;
 //old code
@@ -123,7 +126,10 @@ end;}
 {Convert from twain Fix32 to extended}
 function Fix32ToFloat(Value: TW_FIX32): Extended;
 begin
+  //{$PUSH}
+  {$R-}
   Result := Value.Whole + (Value.Frac / 65536.0);
+  //{$POP}
 end;
 
 {Returns the last position for any of the characters in the parameter}
