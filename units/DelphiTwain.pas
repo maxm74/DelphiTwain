@@ -34,6 +34,7 @@ CHANGE LOG:
              Use of overloaded methods in code (to remove annoying repetitions)
              RangeCeckError Off in Fix32ToFloat/FloatToFix32
              Delphi compatibility;
+             Enum and Array Capabilities always return Current and Default; DuplexEnabled; TwainPixelTypes;
 2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
              Completed TTwainPaperSize enum and set;
@@ -315,8 +316,8 @@ type
     {Returns a pointer to the source pTW_IDENTITY}
     function GetStructure: pTW_IDENTITY;
     {Returns a resolution}
-    function GetResolution(Capability: TW_UINT16; var Return: Extended;
-      var Values: TTwainResolution; Mode: TRetrieveCap): TCapabilityRet;
+    function GetResolution(Capability: TW_UINT16; var Current, Default: Extended;
+      var Values: TTwainResolution): TCapabilityRet;
 
   protected
     {Reads a native image}
@@ -483,10 +484,14 @@ type
     function SetPaperFeeding(Value: TTwainPaperFeeding): TCapabilityRet;
 
     {Get Available Paper Sizes}
-    function GetPaperSizeSet(var PapersList:TTwainPaperSizeSet;
-                             var Current, Default:TTwainPaperSize): TCapabilityRet;
+    function GetPaperSizeSet(var Current, Default:TTwainPaperSize; var Values:TTwainPaperSizeSet): TCapabilityRet;
     {Set paper size}
     function SetPaperSize(Value: TTwainPaperSize): TCapabilityRet;
+
+    {Get Duplex}
+    function GetDuplexEnabled(var Value: Boolean): TCapabilityRet;
+    {Set Duplex}
+    function SetDuplexEnabled(Value: Boolean): TCapabilityRet;
 
     {Set auto size}
     function SetAutoSize(Value: TTwainAutoSize): TCapabilityRet;
@@ -504,23 +509,18 @@ type
     function SetUndefinedImageSize(Value: Boolean): TCapabilityRet;
 
     {Returns bitdepth values}
-    function GetIBitDepth(var Current, Default: Integer;
-      var Supported: TArrayInteger; Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+    function GetIBitDepth(var Current, Default: Integer; var Values: TArrayInteger): TCapabilityRet;
     {Set current bitdepth value}
     function SetIBitDepth(Value: Word): TCapabilityRet;
 
     {Returns pixel type values}
-    function GetIPixelType(var Return: TTwainPixelType;
-      var Supported: TTwainPixelTypeSet; Mode: TRetrieveCap
-      {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+    function GetIPixelType(var Current, Default: TTwainPixelType; var Values: TTwainPixelTypeSet): TCapabilityRet;
     {Set the pixel type value}
     function SetIPixelType(Value: TTwainPixelType): TCapabilityRet;
 
     {Returns X and Y resolutions}
-    function GetIXResolution(var Return: Extended; var Values: TTwainResolution;
-      Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
-    function GetIYResolution(var Return: Extended; var Values: TTwainResolution;
-      Mode: TRetrieveCap {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
+    function GetIXResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
+    function GetIYResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
     {Sets X and X resolutions}
     function SetIXResolution(Value: Extended): TCapabilityRet;
     function SetIYResolution(Value: Extended): TCapabilityRet;
@@ -798,6 +798,10 @@ const
     (name:'US Statement'; w:14.0; h:21.6), (name:'Business card'; w:9.0; h:5.5),
     (name:''; w:0; h:0)
    );
+
+  TwainPixelTypes: array [TTWainPixelType] of String =
+  ('Black & White', 'Gray scale', 'Color (RGB)', 'Color (Palette)', 'Color (CMY)', 'Color (CMYK)',
+   'Color (YUV)', 'Color (YUVK)', 'Color (Cie XYZ)', 'Unknown', 'Unknown1', 'Unknown2', 'Color (BGR)');
 
 {Puts a string inside a TW_STR255}
 {$IFDEF UNICODE}
@@ -2988,7 +2992,7 @@ begin
   Result :=SetFeederEnabled((Value=pfFeeder));
 end;
 
-function TTwainSource.GetPaperSizeSet(var PapersList:TTwainPaperSizeSet; var Current, Default:TTwainPaperSize):TCapabilityRet;
+function TTwainSource.GetPaperSizeSet(var Current, Default:TTwainPaperSize; var Values:TTwainPaperSizeSet):TCapabilityRet;
 var
   EnumV: pTW_ENUMERATION;
   Item: pTW_UINT16;
@@ -2998,7 +3002,7 @@ var
   curVal: TTwainPaperSize;
 
 begin
-  PapersList:=[];
+  Values:=[];
   Current:=tpsNONE;
   Default:=tpsNONE;
   MemHandle:=0;
@@ -3031,7 +3035,7 @@ begin
         if (CurItem=EnumV^.CurrentIndex) then Current:=curVal;
         if (CurItem=EnumV^.DefaultIndex) then Default:=curVal;
 
-        PapersList :=PapersList+[curVal];
+        Values :=Values+[curVal];
 
         inc(Item);
       end;
@@ -3048,6 +3052,16 @@ var iValue: TW_UINT16;
 begin
   iValue:=PaperSizeToTwain(Value);
   Result := SetOneValue(ICAP_SUPPORTEDSIZES, TWTY_UINT16, @iValue);
+end;
+
+function TTwainSource.GetDuplexEnabled(var Value: Boolean): TCapabilityRet;
+begin
+  Result :=GetOneValue(CAP_DUPLEXENABLED, Value, rcGet);
+end;
+
+function TTwainSource.SetDuplexEnabled(Value: Boolean): TCapabilityRet;
+begin
+ Result :=SetOneValue(CAP_DUPLEXENABLED, Value);
 end;
 
 {Sets a range capability}
@@ -3830,14 +3844,14 @@ begin
 end;
 
 {Returns pixel type values}
-function TTwainSource.GetIPixelType(var Return: TTwainPixelType;
-  var Supported: TTwainPixelTypeSet; Mode: TRetrieveCap): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  List    : TStringArray;
-  Current, i,
-  Default : Integer;
-begin
+function TTwainSource.GetIPixelType(var Current, Default: TTwainPixelType; var Values: TTwainPixelTypeSet): TCapabilityRet;
+//var
+//  ItemType: TW_UINT16;
+//  List    : TStringArray;
+//  Current, i,
+//  Default : Integer;
+//begin
+  (*oldcode
   {Call method to get result}
   Result := GetEnumerationValue(ICAP_PIXELTYPE, {%H-}ItemType, {%H-}List, {%H-}Current,
     {%H-}Default, Mode);
@@ -3855,6 +3869,59 @@ begin
     else
       Return := TwainToTTwainPixelType(StrToIntDef(List[Current], -1));
   end {if Result = crSuccess}
+  *)
+var
+  EnumV: pTW_ENUMERATION;
+  Item: pTW_UINT16;
+  CurItem: Integer;
+  Container: TW_UINT16;
+  MemHandle: HGLOBAL;
+  curVal: TTwainPixelType;
+
+begin
+  Values:=[];
+  Current:=tbdUnknown;
+  Default:=tbdUnknown;
+  MemHandle:=0;
+  Result := GetCapabilityRec(ICAP_PIXELTYPE, MemHandle, rcGet, {%H-}Container);
+
+  if (Result = crSuccess) and (Container <> TWON_ENUMERATION) then
+  begin
+    GlobalFree(MemHandle);
+    Result := crUnsupported;
+    Exit;
+  end;
+
+  {If result was sucessfull and memory was allocated}
+  if (Result = crSuccess) then
+  begin
+    {Obtain structure pointer}
+    EnumV := GlobalLock(MemHandle);
+
+    //Paper Sizes must be TWTY_UINT16
+    if (EnumV^.ItemType=TWTY_UINT16) then
+    begin
+      {Prepare to list items}
+      Item := @EnumV^.ItemList[0];
+
+      {Fill the Set with items}
+      for CurItem:=0 to (EnumV^.NumItems-1) do
+      begin
+        curVal:=TwainToTTwainPixelType(Item^);
+
+        if (CurItem=EnumV^.CurrentIndex) then Current:=curVal;
+        if (CurItem=EnumV^.DefaultIndex) then Default:=curVal;
+
+        Values :=Values+[curVal];
+
+        inc(Item);
+      end;
+    end;
+
+    {Unlock memory and unallocate}
+    GlobalUnlock(MemHandle);
+    GlobalFree(MemHandle);
+  end;
 end;
 
 {Set the pixel type value}
@@ -3871,8 +3938,7 @@ begin
 end;
 
 {Returns bitdepth values}
-function TTwainSource.GetIBitDepth(var Current, Default: Integer;
-  var Supported: TArrayInteger; Mode: TRetrieveCap): TCapabilityRet;
+function TTwainSource.GetIBitDepth(var Current, Default: Integer; var Values: TArrayInteger): TCapabilityRet;
 //var
  // ItemType: TW_UINT16;
  // List    : TStringArray;
@@ -3896,7 +3962,7 @@ begin
     if Mode = rcGetDefault then Return := StrToIntDef(List[Default], -1)
     else Return := StrToIntDef(List[Current], -1);
   end {if Result = crSuccess}
-*) Result := GetEnumerationValue(ICAP_BITDEPTH, Supported, Current, Default, Mode);
+*) Result := GetEnumerationValue(ICAP_BITDEPTH, Values, Current, Default, rcGet);
 end;
 
 {Set current bitdepth value}
@@ -3956,8 +4022,8 @@ begin
 end;
 
 {Returns a resolution}
-function TTwainSource.GetResolution(Capability: TW_UINT16; var Return: Extended;
-  var Values: TTwainResolution; Mode: TRetrieveCap): TCapabilityRet;
+function TTwainSource.GetResolution(Capability: TW_UINT16; var Current, Default: Extended;
+  var Values: TTwainResolution): TCapabilityRet;
 var
   Handle: HGlobal;
   EnumV:  pTW_ENUMERATION;
@@ -3966,7 +4032,7 @@ var
   i   : Integer;
 begin
   {Obtain handle to data from this capability}
-  Result := GetCapabilityRec(Capability, {%H-}Handle, Mode, {%H-}Container);
+  Result := GetCapabilityRec(Capability, {%H-}Handle, rcGet, {%H-}Container);
   if Result = crSuccess then
   begin
     {Obtain data}
@@ -3978,6 +4044,7 @@ begin
       exit;
      end;
 
+    { #todo 5 -oMaxM : if container is an Array? }
     EnumV := GlobalLock(Handle);
     if EnumV^.ItemType <> TWTY_FIX32 then Result := crUnsupported
     else begin
@@ -3985,10 +4052,10 @@ begin
       Item := @EnumV^.ItemList[0];
       SetLength(Values, EnumV^.NumItems);
       {Fill array}
-      FOR i := 1 TO EnumV^.NumItems DO
+      for i := 0 to EnumV^.NumItems-1 do
       begin
         {Fill array with the item}
-        Values[i - 1] := Fix32ToFloat(Item^);
+        Values[i] := Fix32ToFloat(Item^);
         {Move to next item}
         inc(Item);
       end {FOR i};
@@ -3999,12 +4066,15 @@ begin
       //DefaultIndex and CurrentIndex valid for enum only!
       //I got nice AV with an old Mustek scanner which uses TWON_ARRAY
       //i return 0 in this case (may be not the best solution, but not AV at least :-)
-      if (Container<>TWON_ARRAY) then
-       begin
-        if Mode = rcGetDefault then Return := Values[EnumV^.DefaultIndex]
-        else Return := Values[EnumV^.CurrentIndex];
-       end
-      else return:=0;
+      if (Container<>TWON_ARRAY)
+      then begin
+             Default := Values[EnumV^.DefaultIndex];
+             Current := Values[EnumV^.CurrentIndex];
+           end
+      else begin
+             Default :=0;
+             Current :=0;
+           end;
     end;
     {Free data}
     GlobalUnlock(Handle);
@@ -4025,17 +4095,15 @@ begin
 end;
 
 {Returns X resolution}
-function TTwainSource.GetIXResolution(var Return: Extended;
-  var Values: TTwainResolution; Mode: TRetrieveCap): TCapabilityRet;
+function TTwainSource.GetIXResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
 begin
-  Result := GetResolution(ICAP_XRESOLUTION, Return, Values, Mode);
+  Result := GetResolution(ICAP_XRESOLUTION, Current, Default, Values);
 end;
 
 {Returns Y resolution}
-function TTwainSource.GetIYResolution(var Return: Extended;
-  var Values: TTwainResolution; Mode: TRetrieveCap): TCapabilityRet;
+function TTwainSource.GetIYResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
 begin
-  Result := GetResolution(ICAP_YRESOLUTION, Return, Values, Mode);
+  Result := GetResolution(ICAP_YRESOLUTION, Current, Default, Values);
 end;
 
 {Returns if user interface is controllable}
