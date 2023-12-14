@@ -21,50 +21,7 @@
 {to allow the component to work without the heavy delphi VCL}
 {for small final executables. To enable, edit DelphiTwain.inc}
 
-
-{
-CHANGE LOG:
-2023/12 MaxM - CapabilityCanGet/Set; GetOneValue overloads; GetIndicators; Get/Set AutoScan;
-	     SetFeederEnabled set also AutoScan and AutoFeed;
-	     Paper Feeding Get/Set in TTwainPaperFeedingSet; GetOrientation
-	     GetEnumerationValue overloads; changed params of GetPaperSizeSet, GetIBitDepth; 
-	     CreateWindow Delphi compatibility;
-             GetRangeValue,GetArrayValue,SetOneValue overload;
-             Use of Fix32ToFloat intestead of StrToFloat;
-             Use of overloaded methods in code (to remove annoying repetitions)
-             RangeCeckError Off in Fix32ToFloat/FloatToFix32
-             Delphi compatibility;
-             Enum and Array Capabilities always return Current and Default; DuplexEnabled; TwainPixelTypes;
-2023/11 MaxM - Fixed various obscurities in code
-             Added GetCapabilitySupportedOp
-             Completed TTwainPaperSize enum and set;
-             Added PaperSizes in cm; GetTwainPaperSize function;
-             GetPaperSizeSet; PaperSizeToTwain as function;
-
-2023/10 MaxM - Control over the functioning of the source code; FindSource overloaded methods 
-	       Completely changed the creation scheme
-               Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
-                      DoCreateTimer; DoDestroyTimer; DoMessagesTimer;
-               First Test of VirtualWindow/Timer in Console Application;
-
-2014/04/29 - Fix for unloading library cancelling acquire window on Lazarus
-             Typo fixes in language constants; cosmetic fixes.
-             (Thanks to Reinier).
-
-2013/12/18 - FireMonkey support, color bug fix.
-
-2013/08/18 - New method OnTransferComplete: fired when all documents are
-  scanned or the scan is canceled. Thanks to Andrei Galatyn.
-
-2013/07/26 - Color problems solved (thanks to Marco & Christian).
-  TWAIN drivers did not respond - now both WIA and TWAIN can be used.
-
-2012/11/01 - Ondrej Pokorny: small changes for Lazarus and 64bit compiler
-
-2009/11/10 - Some changes to make it work in Delphi 2009, and above
-
-2004/01/20 - Some updates and bug fixes by Nemeth Peter
-}
+{ CHANGE LOG: See changelog.txt }
 
 unit DelphiTwain;
 
@@ -99,7 +56,7 @@ const
 
 type
   //Dinamic Array types
-  TArrayExtended = array of Extended;
+  TArraySingle = array of Single;
   TArrayInteger = array of Integer;
   TStringArray = array of String;
 
@@ -155,7 +112,7 @@ type
   TTwainBitDepth = array of TW_UINT16;
 
   {Twain resolutions}
-  TTwainResolution = TArrayExtended;
+  TTwainResolution = TArraySingle;
 
   {Events}
   TOnTwainError = procedure(Sender: TObject; const Index: Integer; ErrorCode,
@@ -316,7 +273,7 @@ type
     {Returns a pointer to the source pTW_IDENTITY}
     function GetStructure: pTW_IDENTITY;
     {Returns a resolution}
-    function GetResolution(Capability: TW_UINT16; var Current, Default: Extended;
+    function GetResolution(Capability: TW_UINT16; var Current, Default: Single;
       var Values: TTwainResolution): TCapabilityRet;
 
   protected
@@ -371,7 +328,7 @@ type
     {Returns an one value Capability}
     function GetOneValue(Capability: TW_UINT16; var Value:Integer;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
-    function GetOneValue(Capability: TW_UINT16; var Value:Extended;
+    function GetOneValue(Capability: TW_UINT16; var Value:Single;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
     function GetOneValue(Capability: TW_UINT16; var Value:Boolean;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
@@ -385,7 +342,7 @@ type
 
     {Returns an range capability}
     function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:Integer): TCapabilityRet; overload;
-    function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:Extended): TCapabilityRet; overload;
+    function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:Single): TCapabilityRet; overload;
     function GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current:String): TCapabilityRet; overload;
 
     function GetRangeValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
@@ -397,7 +354,7 @@ type
       var List:TArrayInteger; var Current, Default: Integer;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
     function GetEnumerationValue(Capability: TW_UINT16;
-      var List:TArrayExtended; var Current, Default: Extended;
+      var List:TArraySingle; var Current, Default: Single;
       Mode: TRetrieveCap{$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet; overload;
     function GetEnumerationValue(Capability: TW_UINT16;
       var List:TStringArray; var Current, Default: String;
@@ -410,7 +367,7 @@ type
 
     {Returns an array capability}
     function GetArrayValue(Capability: TW_UINT16; var List:TArrayInteger): TCapabilityRet; overload;
-    function GetArrayValue(Capability: TW_UINT16; var List:TArrayExtended): TCapabilityRet; overload;
+    function GetArrayValue(Capability: TW_UINT16; var List:TArraySingle): TCapabilityRet; overload;
     function GetArrayValue(Capability: TW_UINT16; var List:TStringArray): TCapabilityRet; overload;
 
     function GetArrayValue(Capability: TW_UINT16; var ItemType: TW_UINT16;
@@ -418,7 +375,7 @@ type
 
     {************************}
     {Sets an one value capability}
-    function SetOneValue(Capability: TW_UINT16; Value: Extended): TCapabilityRet; overload;
+    function SetOneValue(Capability: TW_UINT16; Value: Single): TCapabilityRet; overload;
     function SetOneValue(Capability: TW_UINT16; Value: Boolean): TCapabilityRet; overload;
 
     function SetOneValue(Capability: TW_UINT16; ItemType: TW_UINT16;
@@ -519,16 +476,16 @@ type
     function SetIPixelType(Value: TTwainPixelType): TCapabilityRet;
 
     {Returns X and Y resolutions}
-    function GetIXResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
-    function GetIYResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
+    function GetIXResolution(var Current, Default: Single; var Values: TTwainResolution): TCapabilityRet;
+    function GetIYResolution(var Current, Default: Single; var Values: TTwainResolution): TCapabilityRet;
     {Sets X and X resolutions}
-    function SetIXResolution(Value: Extended): TCapabilityRet;
-    function SetIYResolution(Value: Extended): TCapabilityRet;
+    function SetIXResolution(Value: Single): TCapabilityRet;
+    function SetIYResolution(Value: Single): TCapabilityRet;
 
     {Returns physical width and height}
-    function GetIPhysicalWidth(var Return: Extended; Mode: TRetrieveCap
+    function GetIPhysicalWidth(var Return: Single; Mode: TRetrieveCap
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
-    function GetIPhysicalHeight(var Return: Extended; Mode: TRetrieveCap
+    function GetIPhysicalHeight(var Return: Single; Mode: TRetrieveCap
       {$IFDEF DEFAULTPARAM}=rcGet{$ENDIF}): TCapabilityRet;
 
     {Returns if user interface is controllable}
@@ -549,12 +506,12 @@ type
     function SetAutoScan(Value: Boolean): TCapabilityRet;
 
     //Get/set Contrast
-    function GetContrast(var Return: Extended): TCapabilityRet;
-    function SetContrast(Value: Extended): TCapabilityRet;
+    function GetContrast(var Return: Single): TCapabilityRet;
+    function SetContrast(Value: Single): TCapabilityRet;
 
     //Get/set Contrast
-    function GetBrightness(var Return: Extended): TCapabilityRet;
-    function SetBrightness(Value: Extended): TCapabilityRet;
+    function GetBrightness(var Return: Single): TCapabilityRet;
+    function SetBrightness(Value: Single): TCapabilityRet;
 
     {Object being created/destroyed}
     constructor Create(AOwner: TCustomDelphiTwain);
@@ -604,6 +561,11 @@ type
 
   { TCustomDelphiTwain }
 
+  TTwainAcquireEvent = procedure (Sender: TObject;
+            const Index: Integer; Image:HBitmap; var Cancel: Boolean) of object;
+  TAcquireProgressEvent = procedure (Sender: TObject;
+            const Index: Integer; const Image: HBitmap; const Current, Total: Integer) of object;
+
   TCustomDelphiTwain = class(TTwainComponent)
   private
     {Should contain the number of Twain sources loaded}
@@ -642,6 +604,8 @@ type
     fLibraryLoaded: Boolean;
     {Contains if the source manager was loaded}
     fSourceManagerLoaded: Boolean;
+    rOnAcquireProgress: TAcquireProgressEvent;
+    rOnTwainAcquire: TTwainAcquireEvent;
 
     {Procedure to load and unload twain library and update property}
     procedure SetLibraryLoaded(const Value: Boolean);
@@ -688,10 +652,10 @@ type
     function CustomSelectSource: Integer; virtual; abstract;
     function CustomGetParentWindow: TW_HANDLE; virtual;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:
-      HBitmap; var Cancel: Boolean); virtual; abstract;
-    procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
-      const Image: HBitmap; const Current, Total: Integer); virtual; abstract;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap;
+                             var Cancel: Boolean); virtual;
+    procedure DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap;
+                                const Current, Total: Integer); virtual;
 
   public
     {Clears the list of sources}
@@ -755,6 +719,9 @@ type
     {All images transfered}
     property OnTransferComplete: TOnTransferComplete read fOnTransferComplete
       write fOnTransferComplete;
+
+    property OnTwainAcquire: TTwainAcquireEvent read rOnTwainAcquire write rOnTwainAcquire;
+    property OnAcquireProgress: TAcquireProgressEvent read rOnAcquireProgress write rOnAcquireProgress;
 
     {Default transfer mode to be used with sources}
     property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
@@ -1498,6 +1465,16 @@ begin
   Result := VirtualWindow;
 end;
 
+procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer; Image: HBitmap; var Cancel: Boolean);
+begin
+  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, Image, Cancel);
+end;
+
+procedure TCustomDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap; const Current, Total: Integer);
+begin
+  if Assigned(rOnAcquireProgress) then rOnAcquireProgress(Sender, Index, Image, Current, Total);
+end;
+
 {Returns a TMsg structure}
 function MakeMsg(const Handle: THandle; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): TMsg;
 begin
@@ -2176,7 +2153,7 @@ begin
   end;
 end;
 
-function TTwainSource.GetArrayValue(Capability: TW_UINT16; var List: TArrayExtended): TCapabilityRet;
+function TTwainSource.GetArrayValue(Capability: TW_UINT16; var List: TArraySingle): TCapabilityRet;
 var
   ArrayV   : pTW_ARRAY;
   ItemSize : Integer;
@@ -2387,7 +2364,7 @@ begin
 end;
 
 function TTwainSource.GetEnumerationValue(Capability: TW_UINT16;
-  var List: TArrayExtended; var Current, Default: Extended; Mode: TRetrieveCap): TCapabilityRet;
+  var List: TArraySingle; var Current, Default: Single; Mode: TRetrieveCap): TCapabilityRet;
 var
   EnumV    : pTW_ENUMERATION;
   ItemSize : Integer;
@@ -2620,7 +2597,7 @@ begin
   end;
 end;
 
-function TTwainSource.GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current: Extended): TCapabilityRet;
+function TTwainSource.GetRangeValue(Capability: TW_UINT16; var Min, Max, Step, Default, Current: Single): TCapabilityRet;
 var
   RangeV   : pTW_RANGE;
   Container: TW_UINT16;
@@ -2768,7 +2745,7 @@ begin
   end;
 end;
 
-function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: Extended; Mode: TRetrieveCap): TCapabilityRet;
+function TTwainSource.GetOneValue(Capability: TW_UINT16; var Value: Single; Mode: TRetrieveCap): TCapabilityRet;
 var
   OneV     : pTW_ONEVALUE;
   Container: TW_UINT16;
@@ -2888,7 +2865,7 @@ begin
 end;
 
 {Sets an one value capability}
-function TTwainSource.SetOneValue(Capability: TW_UINT16; Value: Extended): TCapabilityRet;
+function TTwainSource.SetOneValue(Capability: TW_UINT16; Value: Single): TCapabilityRet;
 var
   Fix32: TW_FIX32;
 
@@ -3302,7 +3279,7 @@ var
   Info: TW_IMAGEINFO;
   Setup: TW_SETUPMEMXFER;
   structsize, index, Size, Blocks: Integer;
-  XRes, YRes: Extended;
+  XRes, YRes: Single;
   Pal   : TW_PALETTE8;
   vUnit : TTwainUnit;
   vUnits: TTwainUnitSet;
@@ -3972,7 +3949,7 @@ begin
 end;
 
 {Returns physical width}
-function TTwainSource.GetIPhysicalWidth(var Return: Extended;
+function TTwainSource.GetIPhysicalWidth(var Return: Single;
   Mode: TRetrieveCap): TCapabilityRet;
 var
   Handle: HGlobal;
@@ -3997,7 +3974,7 @@ begin
 end;
 
 {Returns physical height}
-function TTwainSource.GetIPhysicalHeight(var Return: Extended;
+function TTwainSource.GetIPhysicalHeight(var Return: Single;
   Mode: TRetrieveCap): TCapabilityRet;
 var
   Handle: HGlobal;
@@ -4022,7 +3999,7 @@ begin
 end;
 
 {Returns a resolution}
-function TTwainSource.GetResolution(Capability: TW_UINT16; var Current, Default: Extended;
+function TTwainSource.GetResolution(Capability: TW_UINT16; var Current, Default: Single;
   var Values: TTwainResolution): TCapabilityRet;
 var
   Handle: HGlobal;
@@ -4083,25 +4060,25 @@ begin
 end;
 
 {Sets X resolution}
-function TTwainSource.SetIXResolution(Value: Extended): TCapabilityRet;
+function TTwainSource.SetIXResolution(Value: Single): TCapabilityRet;
 begin
   Result := SetOneValue(ICAP_XRESOLUTION, Value);
 end;
 
 {Sets Y resolution}
-function TTwainSource.SetIYResolution(Value: Extended): TCapabilityRet;
+function TTwainSource.SetIYResolution(Value: Single): TCapabilityRet;
 begin
   Result := SetOneValue(ICAP_YRESOLUTION, Value);
 end;
 
 {Returns X resolution}
-function TTwainSource.GetIXResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
+function TTwainSource.GetIXResolution(var Current, Default: Single; var Values: TTwainResolution): TCapabilityRet;
 begin
   Result := GetResolution(ICAP_XRESOLUTION, Current, Default, Values);
 end;
 
 {Returns Y resolution}
-function TTwainSource.GetIYResolution(var Current, Default: Extended; var Values: TTwainResolution): TCapabilityRet;
+function TTwainSource.GetIYResolution(var Current, Default: Single; var Values: TTwainResolution): TCapabilityRet;
 begin
   Result := GetResolution(ICAP_YRESOLUTION, Current, Default, Values);
 end;
@@ -4199,22 +4176,22 @@ begin
   Result := SetOneValue(CAP_AUTOSCAN, Value);
 end;
 
-function TTwainSource.GetContrast(var Return: Extended): TCapabilityRet;
+function TTwainSource.GetContrast(var Return: Single): TCapabilityRet;
 begin
   Result :=GetOneValue(ICAP_CONTRAST, Return, rcGet);
 end;
 
-function TTwainSource.SetContrast(Value: Extended): TCapabilityRet;
+function TTwainSource.SetContrast(Value: Single): TCapabilityRet;
 begin
   Result := SetOneValue(ICAP_CONTRAST, Value);
 end;
 
-function TTwainSource.GetBrightness(var Return: Extended): TCapabilityRet;
+function TTwainSource.GetBrightness(var Return: Single): TCapabilityRet;
 begin
   Result :=GetOneValue(ICAP_BRIGHTNESS, Return, rcGet);
 end;
 
-function TTwainSource.SetBrightness(Value: Extended): TCapabilityRet;
+function TTwainSource.SetBrightness(Value: Single): TCapabilityRet;
 begin
  Result := SetOneValue(ICAP_BRIGHTNESS, Value);
 end;

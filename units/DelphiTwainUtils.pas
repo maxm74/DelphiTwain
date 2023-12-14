@@ -81,10 +81,10 @@ function FileExists(const FilePath: String): Boolean;
 {Extracts the file directory part}
 function ExtractDirectory(const FilePath: String): String;
 {Convert from integer to string}
-{Convert from twain Fix32 to extended}
-function Fix32ToFloat(Value: TW_FIX32): Extended;
-{Convert from extended to Fix32}
-function FloatToFix32 (floater: extended): TW_FIX32;
+{Convert from twain Fix32 to Single}
+function Fix32ToFloat(Value: TW_FIX32): Single;
+{Convert from Single to Fix32}
+function FloatToFix32 (floater: Single): TW_FIX32;
 
 implementation
 
@@ -92,23 +92,23 @@ implementation
 uses
   Windows;
 
-{Convert from extended to Fix32}
-function FloatToFix32 (floater: extended): TW_FIX32;
+{Convert from Single to Fix32}
+function FloatToFix32 (floater: Single): TW_FIX32;
 //Chad Berchek new code:
 var
   i32: Cardinal;
 begin
-  //{$PUSH}
+  {$IFOPT R+}{$DEFINE RANGEON}{$ELSE}{$UNDEF RANGEON}{$ENDIF} {save initial switch state}
   {$R-}
   i32 := Round(floater * 65536.0);
   Result.Whole := i32 shr 16;
   Result.Frac := i32 and $ffff;
-  //{$POP}
+  {$IFDEF RANGEON}{$R+}{$UNDEF RANGEON}{$ENDIF}
 end;
-{function FloatToFix32 (floater: extended): TW_FIX32;
+{function FloatToFix32 (floater: Single): TW_FIX32;
 //old code
 var
-  fracpart : extended;
+  fracpart : Single;
 begin
   //Obtain numerical part by truncating the float number
   Result.Whole := trunc(floater);
@@ -123,13 +123,13 @@ begin
   Result.Frac := trunc(fracpart);
 end;}
 
-{Convert from twain Fix32 to extended}
-function Fix32ToFloat(Value: TW_FIX32): Extended;
+{Convert from twain Fix32 to Single}
+function Fix32ToFloat(Value: TW_FIX32): Single;
 begin
-  //{$PUSH}
+  {$IFOPT R+}{$DEFINE RANGEON}{$ELSE}{$UNDEF RANGEON}{$ENDIF} {save initial switch state}
   {$R-}
   Result := Value.Whole + (Value.Frac / 65536.0);
-  //{$POP}
+  {$IFDEF RANGEON}{$R+}{$UNDEF RANGEON}{$ENDIF}
 end;
 
 {Returns the last position for any of the characters in the parameter}
@@ -222,6 +222,7 @@ const
   {Calls appropriate method and returns necessary size}
   function CallDirectoryMethod(Buffer: Pointer; Size: UINT): UINT;
   begin
+    Result:=0;
     {Test the directory needed by the parameter}
     case DirectoryKind of
       {Windows directory}
@@ -234,8 +235,6 @@ const
       dkApplication: Result := Windows.GetModuleFileName(0, Buffer, Size);
       {Temp directory}
       dkTemp   : Result := Windows.GetTempPath(Size, Buffer);
-      {Unknown directory}
-      else Result := 0;
     end {case}
   end;
 

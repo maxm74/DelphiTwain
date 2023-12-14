@@ -1,39 +1,57 @@
 DELPHITWAIN CHANGE LOG
 ======================
 
-2013/04/29
+2023/12 MaxM - CapabilityCanGet/Set; GetOneValue overloads; GetIndicators; Get/Set AutoScan;
+	     SetFeederEnabled set also AutoScan and AutoFeed;
+	     Paper Feeding Get/Set in TTwainPaperFeedingSet; GetOrientation
+	     GetEnumerationValue overloads; changed params of GetPaperSizeSet, GetIBitDepth;
+	     CreateWindow Delphi compatibility;
+             GetRangeValue,GetArrayValue,SetOneValue overload;
+             Use of Fix32ToFloat intestead of StrToFloat;
+             Use of overloaded methods in code (to remove annoying repetitions)
+             RangeCeckError Off in Fix32ToFloat/FloatToFix32
+             Delphi compatibility;
+             Enum and Array Capabilities always return Current and Default; DuplexEnabled; TwainPixelTypes;
+          14 Changed Extended to Single (for platform compatibility and for my actual state);
+             Added OnTwainAcquire, rOnAcquireProgress in TCustomDelphiTwain;
+             changelog in text file.
 
-Typo fixes in language constants; cosmetic fixes.
-Lazarus fixes: fix for unloading library cancelling acquire window on Lazarus.
-(Thanks to Reinier.)
+2023/11 MaxM - Fixed various obscurities in code
+             Added GetCapabilitySupportedOp
+             Completed TTwainPaperSize enum and set;
+             Added PaperSizes in cm; GetTwainPaperSize function;
+             GetPaperSizeSet; PaperSizeToTwain as function;
 
+2023/10 MaxM - Control over the functioning of the source code; FindSource overloaded methods
+	       Completely changed the creation scheme
+               Added  DoCreateVirtualWindow; DoDestroyVirtualWindow;
+                      DoCreateTimer; DoDestroyTimer; DoMessagesTimer;
+               First Test of VirtualWindow/Timer in Console Application;
 
+2014/04/29 - Fix for unloading library cancelling acquire window on Lazarus
+             Typo fixes in language constants; cosmetic fixes.
+             (Thanks to Reinier).
 
-2013/12/21
+2013/12/21  - Default TransferMode set to ttmNative. Color bug fix for TransferMode = ttmMemory
 
-Default TransferMode set to ttmNative.
-Color bug fix for TransferMode = ttmMemory
+2013/12/18 - FireMonkey support, color bug fix.
 
-
-
-2013/11/05
-
-FireMonkey support (XE2, XE3, XE4, XE5) - thanks to Frediano Palazzi for financially supporting this modification.
-
-TDelphiTwain is not a TComponent descendand any more - you have to use it from code only and free it by yourself.
-
-For FireMonkey add DelphiTwain and DelphiTwain_FMX units to the uses clause. 
-For VCL add DelphiTwain and DelphiTwain_VCL to the uses clause.
-
-
+2013/11/05 - FireMonkey support (XE2, XE3, XE4, XE5) - thanks to Frediano Palazzi for financially supporting this modification.
+             TDelphiTwain is not a TComponent descendand any more - you have to use it from code only and free it by yourself.
+             For FireMonkey add DelphiTwain and DelphiTwain_FMX units to the uses clause.
+             For VCL add DelphiTwain and DelphiTwain_VCL to the uses clause.
 
 2013/10/21 - Fixed function FloatToFix32 - thanks to Chad Berchek
 
-2013/08/18 - New method OnTransferComplete: fired when all documents are
-  scanned or the scan is canceled. Thanks to Andrei Galatyn.
+2013/08/18 - New method OnTransferComplete: fired when all documents are scanned or the scan is canceled.
+             Thanks to Andrei Galatyn.
 
 2013/07/26 - Color problems solved (thanks to Marco & Christian).
-  TWAIN drivers did not respond - now both WIA and TWAIN can be used.
+             TWAIN drivers did not respond - now both WIA and TWAIN can be used.
+
+2013/04/29 - Typo fixes in language constants; cosmetic fixes.
+             Lazarus fixes: fix for unloading library cancelling acquire window on Lazarus.
+             (Thanks to Reinier.)
 
 2012/11/01 - Ondrej Pokorny: small changes for Lazarus and 64bit compiler
 
