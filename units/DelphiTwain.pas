@@ -562,7 +562,7 @@ type
   { TCustomDelphiTwain }
 
   TTwainAcquireEvent = procedure (Sender: TObject;
-            const Index: Integer; Image:HBitmap; var Cancel: Boolean) of object;
+            const Index: Integer; Image:HBitmap; Handle: TW_UINT32; var Cancel: Boolean) of object;
   TAcquireProgressEvent = procedure (Sender: TObject;
             const Index: Integer; const Image: HBitmap; const Current, Total: Integer) of object;
 
@@ -652,7 +652,7 @@ type
     function CustomSelectSource: Integer; virtual; abstract;
     function CustomGetParentWindow: TW_HANDLE; virtual;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap; Handle: TW_UINT32;
                              var Cancel: Boolean); virtual;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap;
                                 const Current, Total: Integer); virtual;
@@ -1465,9 +1465,10 @@ begin
   Result := VirtualWindow;
 end;
 
-procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer; Image: HBitmap; var Cancel: Boolean);
+procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
+                                            Image: HBitmap; Handle: TW_UINT32; var Cancel: Boolean);
 begin
-  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, Image, Cancel);
+  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, Image, Handle, Cancel);
 end;
 
 procedure TCustomDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap; const Current, Total: Integer);
@@ -3599,7 +3600,7 @@ end;
 {Call event for memory image}
 procedure TTwainSource.ReadMemory(Image: HBitmap; var Cancel: Boolean);
 begin
-  Owner.DoTwainAcquire(Owner, Index, Image, Cancel);
+  Owner.DoTwainAcquire(Owner, Index, Image, 0, Cancel);
 end;
 
 {Reads a native image}
@@ -3634,10 +3635,11 @@ begin
      lpBits, DibInfo^, DIB_RGB_COLORS);
   ReleaseDC(Owner.VirtualWindow, DC);
 
-  Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Cancel);
+  GlobalUnlock(Handle);
+
+  Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Handle, Cancel);
 
   {Free bitmap}
-  GlobalUnlock(Handle);
   GlobalFree(Handle);
 end;
 

@@ -44,8 +44,8 @@ type
     function CustomSelectSource: Integer; override;
     function CustomGetParentWindow: TW_HANDLE; override;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:
-      HBitmap; var Cancel: Boolean); override;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap; Handle: TW_UINT32;
+                             var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
       const Image: HBitmap; const Current, Total: Integer); override;
 
@@ -139,7 +139,7 @@ begin
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
-  Image: HBitmap; var Cancel: Boolean);
+  Image: HBitmap;  Handle: TW_UINT32; var Cancel: Boolean);
 var BitmapObj: TBitmap;
 begin
   if Assigned(OnTwainAcquire) then

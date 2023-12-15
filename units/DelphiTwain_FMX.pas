@@ -31,8 +31,8 @@ type
     procedure MessageTimer_Disable; override;
     function CustomSelectSource: Integer; override;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:
-      HBitmap; var Cancel: Boolean); override;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap;  Handle: TW_UINT32;
+                             var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
       const Image: HBitmap; const Current, Total: Integer); override;
   public
@@ -148,7 +148,7 @@ begin
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
-  Image: HBitmap; var Cancel: Boolean);
+  Image: HBitmap; Handle: TW_UINT32; var Cancel: Boolean);
 var
   xBmp: TBitmap;
 begin
