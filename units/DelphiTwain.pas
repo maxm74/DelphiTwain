@@ -3536,39 +3536,6 @@ begin
   Owner.RefreshVirtualWindow;
 end;
 
-{Returns the number of colors in the DIB}
-function DibNumColors (pv: Pointer): Word;
-var
-  Bits: Integer;
-  lpbi: PBITMAPINFOHEADER absolute pv;
-  lpbc: PBITMAPCOREHEADER absolute pv;
-begin
-  //With the BITMAPINFO format headers, the size of the palette
-  //is in biClrUsed, whereas in the BITMAPCORE - style headers, it
-  //is dependent on the bits per pixel ( = 2 raised to the power of
-  //bits/pixel).
-  if (lpbi^.biSize <> sizeof(BITMAPCOREHEADER)) then
-  begin
-    if (lpbi^.biClrUsed <> 0) then
-    begin
-      result := lpbi^.biClrUsed;
-      exit;
-    end;
-    Bits := lpbi^.biBitCount;
-  end
-  else
-     Bits := lpbc^.bcBitCount;
-
-  {Test bits to return}
-  case (Bits) of
-    1: Result := 2;
-    4: Result := 16;
-    8: Result := 256;
-    else Result := 0;
-  end {case};
-
-end;
-
 {Converts from TWain TW_UINT16 to TTwainFormat}
 function TwainToTTwainFormat(Value: TW_UINT16): TTwainFormat;
 begin
@@ -3606,13 +3573,13 @@ end;
 {Reads a native image}
 procedure TTwainSource.ReadNative(Handle: TW_UINT32; var Cancel: Boolean);
 var
-  DibInfo: ^TBITMAPINFO;
+  DibInfo: PBITMAPINFO;
   ColorTableSize: Integer;
   lpBits: PAnsiChar;//ccc
   DC: HDC;
   BitmapHandle: HBitmap;
-begin
 
+begin
   {Get image information pointer and size}
   DibInfo := GlobalLock(Handle);
   ColorTableSize := (DibNumColors(DibInfo) * SizeOf(RGBQUAD));
@@ -3631,8 +3598,9 @@ begin
   {Creates the bitmap}
   DC := GetDC(Owner.VirtualWindow);
 
-  BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT,
-     lpBits, DibInfo^, DIB_RGB_COLORS);
+  BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_RGB_COLORS);
+  //MaxM: if ColorTableSize>0??? BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_PAL_COLORS);
+
   ReleaseDC(Owner.VirtualWindow, DC);
 
   GlobalUnlock(Handle);

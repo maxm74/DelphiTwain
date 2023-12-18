@@ -15,7 +15,8 @@ DELPHITWAIN CHANGE LOG
           14 Changed Extended to Single (for platform compatibility and for my actual state);
              Added OnTwainAcquire, rOnAcquireProgress in TCustomDelphiTwain;
              changelog in text file.
-	  15 added Native Image Handle to DoTwainAcquire params 
+	  15 added Native Image Handle to DoTwainAcquire params
+	  18 Utils: new function WriteBitmapToFile; moved DibNumColors 
 
 2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
