@@ -278,11 +278,11 @@ type
 
   protected
     {Reads a native image}
-    procedure ReadNative(Handle: TW_UINT32; var Cancel: Boolean);
+    procedure ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
     {Reads the file image}
     procedure ReadFile(Name: TW_STR255; Format: TW_UINT16; var Cancel: Boolean);
     {Call event for memory image}
-    procedure ReadMemory(Image: HBitmap; var Cancel: Boolean);
+    procedure ReadMemory(imageHandle: HBitmap; var Cancel: Boolean);
 
     {Prepare image memory transference}
     function PrepareMemXfer(var BitmapHandle: HBitmap;
@@ -561,10 +561,12 @@ type
 
   { TCustomDelphiTwain }
 
-  TTwainAcquireEvent = procedure (Sender: TObject;
-            const Index: Integer; Image:HBitmap; Handle: TW_UINT32; var Cancel: Boolean) of object;
-  TAcquireProgressEvent = procedure (Sender: TObject;
-            const Index: Integer; const Image: HBitmap; const Current, Total: Integer) of object;
+  TTwainAcquireNativeEvent = function (Sender: TObject; const Index: Integer;
+                                       nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean of object;
+  TTwainAcquireEvent = procedure (Sender: TObject; const Index: Integer;
+                                  imageHandle:HBitmap; var Cancel: Boolean) of object;
+  TAcquireProgressEvent = procedure (Sender: TObject; const Index: Integer;
+                                     const imageHandle: HBitmap; const Current, Total: Integer) of object;
 
   TCustomDelphiTwain = class(TTwainComponent)
   private
@@ -605,6 +607,7 @@ type
     {Contains if the source manager was loaded}
     fSourceManagerLoaded: Boolean;
     rOnAcquireProgress: TAcquireProgressEvent;
+    rOnTwainAcquireNative: TTwainAcquireNativeEvent;
     rOnTwainAcquire: TTwainAcquireEvent;
 
     {Procedure to load and unload twain library and update property}
@@ -652,9 +655,11 @@ type
     function CustomSelectSource: Integer; virtual; abstract;
     function CustomGetParentWindow: TW_HANDLE; virtual;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap; Handle: TW_UINT32;
+    function DoTwainAcquireNative(Sender: TObject; const Index: Integer; nativeHandle: TW_UINT32;
+                             var Cancel: Boolean):Boolean; virtual;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; imageHandle:HBitmap;
                              var Cancel: Boolean); virtual;
-    procedure DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap;
+    procedure DoAcquireProgress(Sender: TObject; const Index: Integer; const imageHandle: HBitmap;
                                 const Current, Total: Integer); virtual;
 
   public
@@ -720,6 +725,7 @@ type
     property OnTransferComplete: TOnTransferComplete read fOnTransferComplete
       write fOnTransferComplete;
 
+    property OnTwainAcquireNative: TTwainAcquireNativeEvent read rOnTwainAcquireNative write rOnTwainAcquireNative;
     property OnTwainAcquire: TTwainAcquireEvent read rOnTwainAcquire write rOnTwainAcquire;
     property OnAcquireProgress: TAcquireProgressEvent read rOnAcquireProgress write rOnAcquireProgress;
 
@@ -1465,15 +1471,24 @@ begin
   Result := VirtualWindow;
 end;
 
-procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
-                                            Image: HBitmap; Handle: TW_UINT32; var Cancel: Boolean);
+function TCustomDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                                 nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean;
 begin
-  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, Image, Handle, Cancel);
+  //MaxM: No need to create HBitmap if unused
+  Result :=Assigned(rOnTwainAcquire);
+  if Assigned(rOnTwainAcquireNative) then Result :=rOnTwainAcquireNative(Sender, Index, nativeHandle, Cancel);
 end;
 
-procedure TCustomDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer; const Image: HBitmap; const Current, Total: Integer);
+procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
+                                            imageHandle: HBitmap; var Cancel: Boolean);
 begin
-  if Assigned(rOnAcquireProgress) then rOnAcquireProgress(Sender, Index, Image, Current, Total);
+  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, imageHandle, Cancel);
+end;
+
+procedure TCustomDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
+                                               const imageHandle: HBitmap; const Current, Total: Integer);
+begin
+  if Assigned(rOnAcquireProgress) then rOnAcquireProgress(Sender, Index, imageHandle, Current, Total);
 end;
 
 {Returns a TMsg structure}
@@ -3565,13 +3580,13 @@ begin
 end;
 
 {Call event for memory image}
-procedure TTwainSource.ReadMemory(Image: HBitmap; var Cancel: Boolean);
+procedure TTwainSource.ReadMemory(imageHandle: HBitmap; var Cancel: Boolean);
 begin
-  Owner.DoTwainAcquire(Owner, Index, Image, 0, Cancel);
+  Owner.DoTwainAcquire(Owner, Index, imageHandle, Cancel);
 end;
 
 {Reads a native image}
-procedure TTwainSource.ReadNative(Handle: TW_UINT32; var Cancel: Boolean);
+procedure TTwainSource.ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
 var
   DibInfo: PBITMAPINFO;
   ColorTableSize: Integer;
@@ -3580,35 +3595,39 @@ var
   BitmapHandle: HBitmap;
 
 begin
-  {Get image information pointer and size}
-  DibInfo := GlobalLock(Handle);
-  ColorTableSize := (DibNumColors(DibInfo) * SizeOf(RGBQUAD));
+  if Owner.DoTwainAcquireNative(Owner, Index, nativeHandle, Cancel) then
+  begin
+    {Get image information pointer and size}
+    DibInfo := GlobalLock(nativeHandle);
+    ColorTableSize := (DibNumColors(DibInfo) * SizeOf(RGBQUAD));
 
-  {Get data memory position}
-  lpBits := PAnsiChar(DibInfo);//ccc
-  //{$IFDEF FPC}
-  Inc(lpBits, DibInfo.bmiHeader.biSize);
-  //{$ELSE}ccc
-  //DELPHI BUG - due to wrong PChar definition
-  //Inc(lpBits, DibInfo.bmiHeader.biSize div 2);
-  //{$ENDIF}
-  Inc(lpBits, ColorTableSize);
-  //lpBits := PAnsiChar(DibInfo^.bmiColors);//ccc
+    {Get data memory position}
+    lpBits := PAnsiChar(DibInfo);//ccc
+    //{$IFDEF FPC}
+    Inc(lpBits, DibInfo.bmiHeader.biSize);
+    //{$ELSE}ccc
+    //DELPHI BUG - due to wrong PChar definition
+    //Inc(lpBits, DibInfo.bmiHeader.biSize div 2);
+    //{$ENDIF}
+    Inc(lpBits, ColorTableSize);
+    //lpBits := PAnsiChar(DibInfo^.bmiColors);//ccc
 
-  {Creates the bitmap}
-  DC := GetDC(Owner.VirtualWindow);
+    {Creates the bitmap}
+    DC := GetDC(Owner.VirtualWindow);
 
-  BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_RGB_COLORS);
-  //MaxM: if ColorTableSize>0??? BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_PAL_COLORS);
+    BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_RGB_COLORS);
+    //MaxM: if ColorTableSize>0??? BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_PAL_COLORS);
 
-  ReleaseDC(Owner.VirtualWindow, DC);
+    ReleaseDC(Owner.VirtualWindow, DC);
 
-  GlobalUnlock(Handle);
+    GlobalUnlock(nativeHandle);
 
-  Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Handle, Cancel);
+    Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Cancel);
 
-  {Free bitmap}
-  GlobalFree(Handle);
+    {Free bitmap}
+    DeleteObject(BitmapHandle); //MaxM: Free the Bitmap. If the user needs it, he can make a copy
+    GlobalFree(nativeHandle);
+  end;
 end;
 
 {Setup file transfer}
@@ -3974,58 +3993,79 @@ function TTwainSource.GetResolution(Capability: TW_UINT16; var Current, Default:
 var
   Handle: HGlobal;
   EnumV:  pTW_ENUMERATION;
+  ArrayV: pTW_ARRAY;
   Container: TW_UINT16;
   Item: pTW_FIX32;
   i   : Integer;
+
 begin
   {Obtain handle to data from this capability}
   Result := GetCapabilityRec(Capability, {%H-}Handle, rcGet, {%H-}Container);
   if Result = crSuccess then
   begin
     {Obtain data}
-    //npeter
-    //the "if" is just for sure!
-    if (Container<>TWON_ENUMERATION) and (Container<>TWON_ARRAY) then
-     begin
-      result:=crUnsupported;
-      exit;
-     end;
 
-    { #todo 5 -oMaxM : if container is an Array? }
-    EnumV := GlobalLock(Handle);
-    if EnumV^.ItemType <> TWTY_FIX32 then Result := crUnsupported
-    else begin
-      {Set array size and pointer to the first item}
-      Item := @EnumV^.ItemList[0];
-      SetLength(Values, EnumV^.NumItems);
-      {Fill array}
-      for i := 0 to EnumV^.NumItems-1 do
-      begin
-        {Fill array with the item}
-        Values[i] := Fix32ToFloat(Item^);
-        {Move to next item}
-        inc(Item);
-      end {FOR i};
+    Case Container of
+    TWON_ENUMERATION: begin
+        EnumV := GlobalLock(Handle);
+        if (EnumV^.ItemType = TWTY_FIX32) then
+        begin
+          {Set array size and pointer to the first item}
+          Item := @EnumV^.ItemList[0];
+          SetLength(Values, EnumV^.NumItems);
 
-      {Fill return}
+          {Fill array}
+          for i := 0 to EnumV^.NumItems-1 do
+          begin
+           {Fill array with the item}
+           Values[i] := Fix32ToFloat(Item^);
+           {Move to next item}
+           inc(Item);
+          end;
 
-      //npeter
-      //DefaultIndex and CurrentIndex valid for enum only!
-      //I got nice AV with an old Mustek scanner which uses TWON_ARRAY
-      //i return 0 in this case (may be not the best solution, but not AV at least :-)
-      if (Container<>TWON_ARRAY)
-      then begin
-             Default := Values[EnumV^.DefaultIndex];
-             Current := Values[EnumV^.CurrentIndex];
-           end
-      else begin
-             Default :=0;
-             Current :=0;
-           end;
+          Default := Values[EnumV^.DefaultIndex];
+          Current := Values[EnumV^.CurrentIndex];
+        end
+        else Result := crUnsupported;
+
+        {Free data}
+        GlobalUnlock(Handle);
+        GlobalFree(Handle);
     end;
-    {Free data}
-    GlobalUnlock(Handle);
-    GlobalFree(Handle);
+    TWON_ARRAY: begin
+        //MaxM: The old code used indiscriminately between Enum and Array. :-o
+        //      A very serious mistake given the different alignment of the two types.
+        ArrayV := GlobalLock(Handle);
+        if (ArrayV^.ItemType = TWTY_FIX32) then
+        begin
+          {Set array size and pointer to the first item}
+          Item := @ArrayV^.ItemList[0];
+          SetLength(Values, ArrayV^.NumItems);
+
+          {Fill array}
+          for i := 0 to ArrayV^.NumItems-1 do
+          begin
+            {Fill array with the item}
+            Values[i] := Fix32ToFloat(Item^);
+            {Move to next item}
+            inc(Item);
+          end;
+
+          //npeter
+          //I got nice AV with an old Mustek scanner which uses TWON_ARRAY
+          //i return 0 [in Current,Default] in this case (may be not the best solution, but not AV at least :-)
+          //MaxM: is better to return the first element
+          Default := Values[0];
+          Current := Values[0];
+        end
+        else Result := crUnsupported;
+
+        {Free data}
+        GlobalUnlock(Handle);
+        GlobalFree(Handle);
+    end;
+    else Result:=crUnsupported;
+    end;
   end;
 end;
 

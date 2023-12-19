@@ -24,17 +24,17 @@ type
     fOnTwainAcquire: TOnTwainAcquire;
     fOnAcquireProgress: TOnAcquireProgress;
 
-    procedure DoMessagesTimer(Sender: TObject);
-
   protected
     procedure MessageTimer_Enable; override;
     procedure MessageTimer_Disable; override;
     function CustomSelectSource: Integer; override;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap;  Handle: TW_UINT32;
-                             var Cancel: Boolean); override;
+    function DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                  nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean; override;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer;
+                             imageHandle:HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
-      const Image: HBitmap; const Current, Total: Integer); override;
+                                const imageHandle: HBitmap; const Current, Total: Integer); override;
   public
     procedure DoCreateTimer; override;
     procedure DoDestroyTimer; override;
@@ -128,7 +128,7 @@ begin
 end;
 
 procedure TDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
-  const Image: HBitmap; const Current, Total: Integer);
+                                         const imageHandle: HBitmap; const Current, Total: Integer);
 begin
   if Assigned(fOnAcquireProgress) then
     fOnAcquireProgress(Self, Index, Current, Total);
@@ -147,16 +147,23 @@ begin
   FreeAndNil(fMessagesTimer);
 end;
 
+function TDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                           nativeHandle: TW_UINT32; var Cancel: Boolean): Boolean;
+begin
+  //MaxM: No need to create HBitmap if unused
+  Result:=Assigned(fOnTwainAcquire);
+end;
+
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
-  Image: HBitmap; Handle: TW_UINT32; var Cancel: Boolean);
+                                      imageHandle: HBitmap; var Cancel: Boolean);
 var
   xBmp: TBitmap;
 begin
-  if Assigned(OnTwainAcquire) then
+  if Assigned(fOnTwainAcquire) then
   begin
     xBmp := TBitmap.Create(0, 0);
     try
-      HBitmapToTBitmap(Image, xBmp);
+      HBitmapToTBitmap(imageHandle, xBmp);
       fOnTwainAcquire(Sender, Index, xBmp, Cancel);
     finally
       xBmp.Free;

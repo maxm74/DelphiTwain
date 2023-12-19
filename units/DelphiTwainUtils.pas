@@ -89,9 +89,10 @@ function FloatToFix32 (floater: Single): TW_FIX32;
 {Returns the number of colors in the DIB}
 function DibNumColors (pv: Pointer): Word;
 
-//Write a Windows Bitmap Handle to File
+//Write a Windows Bitmap Native Handle to File
 function WriteBitmapToFile(FileName:String; hDIB: TW_UINT32): Boolean; overload;
-function WriteBitmapToFile(FileName:String; var DibInfo: TBITMAPINFO; hBmp:HBITMAP; hDC:HDC): Boolean; overload;
+//Write a Windows HBitmap Handle to File (32bit RGB)
+function WriteBitmapToFile(FileName:String; hBmp:HBITMAP; hDC:HDC): Boolean; overload;
 
 implementation
 
@@ -326,55 +327,56 @@ begin
   Result :=True;
 end;
 
-function WriteBitmapToFile(FileName:String; var DibInfo: TBITMAPINFO; hBmp:HBITMAP; hDC:HDC): Boolean;
+function WriteBitmapToFile(FileName:String; hBmp:HBITMAP; hDC:HDC): Boolean;
 var
    hdr: BITMAPFILEHEADER;
-   fd: TFileStream;
-   handleBits, palette: HGlobal;
-   lpBits, lpPalette: PChar;
-   ncolors:DWORD;
+   fd: TFileStream =nil;
+   handleBits: HGlobal;
+   lpBits: PChar;
+   DibInfo: TBITMAPINFO;
 
 begin
-  { #todo -oMaxM : This function dont works with GrayScale/palette Images }
-  try
   Result :=False;
-  handleBits :=GlobalAlloc(GMEM_FIXED, DibInfo.bmiHeader.biSizeImage);
-  lpBits :=GlobalLock(handleBits);
-  if (lpBits<>nil) then
-  begin
-    ncolors :=DibInfo.bmiHeader.biClrUsed;
-    GetDIBits(hDC, hBmp, 0, DibInfo.bmiHeader.biHeight, lpBits, DibInfo, DIB_RGB_COLORS);
- //   DibInfo.bmiHeader.biClrUsed:=ncolors;
+  FillChar(DibInfo, SizeOf(TBITMAPINFO), 0);
+  DibInfo.bmiHeader.biSize :=SizeOf(DibInfo.bmiHeader);
+  if (GetDIBits(hDC, hBmp, 0, 0, nil, DibInfo, DIB_RGB_COLORS) > 0) then
+  try
+    handleBits :=GlobalAlloc(GMEM_FIXED, DibInfo.bmiHeader.biSizeImage);
+    lpBits :=GlobalLock(handleBits);
 
-//    palette :=GlobalAlloc(GMEM_FIXED, ncolors * sizeof(RGBQUAD));
-//    lpPalette :=GlobalLock(palette);
-//    GetDIBits(hDC, hBmp, 0, DibInfo.bmiHeader.biHeight, lpPalette, DibInfo, DIB_PAL_COLORS);
-//    DibInfo.bmiHeader.biClrUsed:=ncolors;
+    // requesting a 32 bit image means that no stride/padding will be necessary,
+    // although it always contains an (possibly unused) alpha channel
+    DibInfo.bmiHeader.biBitCount :=32;
+    DibInfo.bmiHeader.biCompression :=BI_RGB;  // no compression -> easier to use
+    DibInfo.bmiHeader.biClrUsed :=0;  //no palette
 
-    hdr.bfType :=$4D42;
-    hdr.bfSize :=(sizeof(BITMAPFILEHEADER) + DibInfo.bmiHeader.biSize + DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD) + DibInfo.bmiHeader.biSizeImage);
-    hdr.bfReserved1 :=0;
-    hdr.bfReserved2 :=0;
-    hdr.bfOffBits :=(sizeof(BITMAPFILEHEADER) + DibInfo.bmiHeader.biSize + DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD));
+    // correct the bottom-up ordering of lines (abs is in cstdblib and stdlib.h)
+    DibInfo.bmiHeader.biHeight :=Abs(DibInfo.bmiHeader.biHeight);
 
-    fd :=TFileStream.Create(FileName, fmCreate);
-    // Write the file header
-    fd.Write(hdr, SizeOf(hdr));
-    // Write the DIB header
-    fd.Write(DibInfo, sizeof(BITMAPINFOHEADER)+DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD));
-    //fd.Write(lpPalette^,  DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD));
-    // Write the bits
-    fd.Write(lpBits^, DibInfo.bmiHeader.biSizeImage);
+    // Call GetDIBits a second time, this time to (format and) store the actual
+    // bitmap data (the "pixels") in the buffer lpBits
+    if (GetDIBits(hDC, hBmp, 0, DibInfo.bmiHeader.biHeight, lpBits, &DibInfo, DIB_RGB_COLORS) > 0) then
+    begin
+      hdr.bfType :=$4D42;
+      hdr.bfSize :=(sizeof(BITMAPFILEHEADER) + DibInfo.bmiHeader.biSize (*+ DibInfo.bmiHeader.biClrUsed*sizeof(RGBQUAD)*) + DibInfo.bmiHeader.biSizeImage);
+      hdr.bfReserved1 :=0;
+      hdr.bfReserved2 :=0;
+      hdr.bfOffBits :=(sizeof(BITMAPFILEHEADER) + DibInfo.bmiHeader.biSize (*+ DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD)*));
 
-    fd.Free;
-    Result :=True;
-  end;
+      fd :=TFileStream.Create(FileName, fmCreate);
+      // Write the file header
+      fd.Write(hdr, SizeOf(hdr));
+      // Write the DIB header
+      fd.Write(DibInfo, sizeof(BITMAPINFOHEADER)(*+DibInfo.bmiHeader.biClrUsed * sizeof(RGBQUAD)*));
+      // Write the bits
+      fd.Write(lpBits^, DibInfo.bmiHeader.biSizeImage);
 
+      Result :=True;
+    end;
   finally
-    //GlobalUnlock(palette);
-    //GlobalFree(palette);
     GlobalUnlock(handleBits);
     GlobalFree(handleBits);
+    fd.Free;
   end;
 end;
 

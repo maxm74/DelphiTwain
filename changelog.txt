@@ -16,7 +16,11 @@ DELPHITWAIN CHANGE LOG
              Added OnTwainAcquire, rOnAcquireProgress in TCustomDelphiTwain;
              changelog in text file.
 	  15 added Native Image Handle to DoTwainAcquire params
-	  18 Utils: new function WriteBitmapToFile; moved DibNumColors 
+	  18 Utils: new function WriteBitmapToFile; moved DibNumColors
+          19 Divided the two events OnTwainAcquireNative OnTwainAcquire; changed Handle param Names
+             ReadNative not create the HBitmap if unused and delete it after if used;
+             GetResolution distinguishes between Enum and array (A very serious mistake);
+             Utils: WriteBitmapToFile with only HBitmap param
 
 2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp

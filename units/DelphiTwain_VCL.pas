@@ -44,10 +44,12 @@ type
     function CustomSelectSource: Integer; override;
     function CustomGetParentWindow: TW_HANDLE; override;
 
-    procedure DoTwainAcquire(Sender: TObject; const Index: Integer; Image:HBitmap; Handle: TW_UINT32;
-                             var Cancel: Boolean); override;
+    function DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                  nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean; override;
+    procedure DoTwainAcquire(Sender: TObject; const Index: Integer;
+                             imageHandle:HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
-      const Image: HBitmap; const Current, Total: Integer); override;
+                                const imageHandle: HBitmap; const Current, Total: Integer); override;
 
   public
     {Image acquired}
@@ -132,22 +134,29 @@ begin
 end;
 
 procedure TDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
-  const Image: HBitmap; const Current, Total: Integer);
+                                         const imageHandle: HBitmap; const Current, Total: Integer);
 begin
   if Assigned(fOnAcquireProgress) then
-    fOnAcquireProgress(Self, Index, Image, Current, Total);
+    fOnAcquireProgress(Self, Index, imageHandle, Current, Total);
+end;
+
+function TDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                           nativeHandle: TW_UINT32; var Cancel: Boolean): Boolean;
+begin
+  //MaxM: No need to create HBitmap if unused
+  Result:=Assigned(fOnTwainAcquire);
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
-  Image: HBitmap;  Handle: TW_UINT32; var Cancel: Boolean);
+                                      imageHandle: HBitmap; var Cancel: Boolean);
 var BitmapObj: TBitmap;
 begin
-  if Assigned(OnTwainAcquire) then
+  if Assigned(fOnTwainAcquire) then
   begin
     BitmapObj := TBitmap.Create;
     try
-      BitmapObj.Handle := Image;
-      OnTwainAcquire(Sender, Index, BitmapObj, Cancel);
+      BitmapObj.Handle := imageHandle;
+      fOnTwainAcquire(Sender, Index, BitmapObj, Cancel);
     finally
       BitmapObj.Free;
     end;
