@@ -561,10 +561,10 @@ type
 
   { TCustomDelphiTwain }
 
-  TTwainAcquireNativeEvent = function (Sender: TObject; const Index: Integer;
-                                       nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean of object;
-  TTwainAcquireEvent = procedure (Sender: TObject; const Index: Integer;
-                                  imageHandle:HBitmap; var Cancel: Boolean) of object;
+  TTwainAcquireNativeEvent = procedure (Sender: TObject; const Index: Integer;
+                                        nativeHandle: TW_UINT32; var Cancel: Boolean) of object;
+  TTwainAcquireBitmapEvent = procedure (Sender: TObject; const Index: Integer;
+                                        imageHandle:HBitmap; var Cancel: Boolean) of object;
   TAcquireProgressEvent = procedure (Sender: TObject; const Index: Integer;
                                      const imageHandle: HBitmap; const Current, Total: Integer) of object;
 
@@ -608,7 +608,7 @@ type
     fSourceManagerLoaded: Boolean;
     rOnAcquireProgress: TAcquireProgressEvent;
     rOnTwainAcquireNative: TTwainAcquireNativeEvent;
-    rOnTwainAcquire: TTwainAcquireEvent;
+    rOnTwainAcquireBitmap: TTwainAcquireBitmapEvent;
 
     {Procedure to load and unload twain library and update property}
     procedure SetLibraryLoaded(const Value: Boolean);
@@ -655,8 +655,8 @@ type
     function CustomSelectSource: Integer; virtual; abstract;
     function CustomGetParentWindow: TW_HANDLE; virtual;
 
-    function DoTwainAcquireNative(Sender: TObject; const Index: Integer; nativeHandle: TW_UINT32;
-                             var Cancel: Boolean):Boolean; virtual;
+    procedure DoTwainAcquireNative(Sender: TObject; const Index: Integer; nativeHandle: TW_UINT32;
+                                   var NeedBitmap, Cancel: Boolean); virtual;
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer; imageHandle:HBitmap;
                              var Cancel: Boolean); virtual;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer; const imageHandle: HBitmap;
@@ -726,7 +726,7 @@ type
       write fOnTransferComplete;
 
     property OnTwainAcquireNative: TTwainAcquireNativeEvent read rOnTwainAcquireNative write rOnTwainAcquireNative;
-    property OnTwainAcquire: TTwainAcquireEvent read rOnTwainAcquire write rOnTwainAcquire;
+    property OnTwainAcquireBitmap: TTwainAcquireBitmapEvent read rOnTwainAcquireBitmap write rOnTwainAcquireBitmap;
     property OnAcquireProgress: TAcquireProgressEvent read rOnAcquireProgress write rOnAcquireProgress;
 
     {Default transfer mode to be used with sources}
@@ -1471,18 +1471,18 @@ begin
   Result := VirtualWindow;
 end;
 
-function TCustomDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                                 nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean;
+procedure TCustomDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                                 nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean);
 begin
   //MaxM: No need to create HBitmap if unused
-  Result :=Assigned(rOnTwainAcquire);
-  if Assigned(rOnTwainAcquireNative) then Result :=rOnTwainAcquireNative(Sender, Index, nativeHandle, Cancel);
+  NeedBitmap :=NeedBitmap or Assigned(rOnTwainAcquireBitmap);
+  if Assigned(rOnTwainAcquireNative) then rOnTwainAcquireNative(Sender, Index, nativeHandle, Cancel);
 end;
 
 procedure TCustomDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;
                                             imageHandle: HBitmap; var Cancel: Boolean);
 begin
-  if Assigned(rOnTwainAcquire) then rOnTwainAcquire(Sender, Index, imageHandle, Cancel);
+  if Assigned(rOnTwainAcquireBitmap) then rOnTwainAcquireBitmap(Sender, Index, imageHandle, Cancel);
 end;
 
 procedure TCustomDelphiTwain.DoAcquireProgress(Sender: TObject; const Index: Integer;
@@ -3593,9 +3593,12 @@ var
   lpBits: PAnsiChar;//ccc
   DC: HDC;
   BitmapHandle: HBitmap;
+  NeedBitmap:Boolean;
 
 begin
-  if Owner.DoTwainAcquireNative(Owner, Index, nativeHandle, Cancel) then
+  NeedBitmap:=False;
+  Owner.DoTwainAcquireNative(Owner, Index, nativeHandle, NeedBitmap, Cancel);
+  if NeedBitmap then
   begin
     {Get image information pointer and size}
     DibInfo := GlobalLock(nativeHandle);
@@ -3615,17 +3618,16 @@ begin
     {Creates the bitmap}
     DC := GetDC(Owner.VirtualWindow);
 
+    { #note -oMaxM : In this way an RGB bitmap is always created even when we have a grayscale or a palette }
     BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_RGB_COLORS);
-    //MaxM: if ColorTableSize>0??? BitmapHandle := CreateDIBitmap(DC, DibInfo.bmiHeader, CBM_INIT, lpBits, DibInfo^, DIB_PAL_COLORS);
 
     ReleaseDC(Owner.VirtualWindow, DC);
-
-    GlobalUnlock(nativeHandle);
 
     Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Cancel);
 
     {Free bitmap}
-    DeleteObject(BitmapHandle); //MaxM: Free the Bitmap. If the user needs it, he can make a copy
+    //DeleteObject(BitmapHandle); //MaxM: we can not Free the Bitmap Handke
+    GlobalUnlock(nativeHandle);
     GlobalFree(nativeHandle);
   end;
 end;
@@ -4023,8 +4025,11 @@ begin
            inc(Item);
           end;
 
-          Default := Values[EnumV^.DefaultIndex];
-          Current := Values[EnumV^.CurrentIndex];
+          if (EnumV^.NumItems>0) then //MaxM: You can never have too much paranoia
+          begin
+            Default :=Values[EnumV^.DefaultIndex];
+            Current :=Values[EnumV^.CurrentIndex];
+          end;
         end
         else Result := crUnsupported;
 
@@ -4055,8 +4060,11 @@ begin
           //I got nice AV with an old Mustek scanner which uses TWON_ARRAY
           //i return 0 [in Current,Default] in this case (may be not the best solution, but not AV at least :-)
           //MaxM: is better to return the first element
-          Default := Values[0];
-          Current := Values[0];
+          if (EnumV^.NumItems>0) then //MaxM: You can never have too much paranoia
+          begin
+            Default :=Values[0];
+            Current :=Values[0];
+          end;
         end
         else Result := crUnsupported;
 

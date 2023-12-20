@@ -330,12 +330,13 @@ end;
 function WriteBitmapToFile(FileName:String; hBmp:HBITMAP; hDC:HDC): Boolean;
 var
    hdr: BITMAPFILEHEADER;
-   fd: TFileStream =nil;
+   fd: TFileStream;
    handleBits: HGlobal;
    lpBits: PChar;
    DibInfo: TBITMAPINFO;
 
 begin
+  fd:=nil;
   Result :=False;
   FillChar(DibInfo, SizeOf(TBITMAPINFO), 0);
   DibInfo.bmiHeader.biSize :=SizeOf(DibInfo.bmiHeader);

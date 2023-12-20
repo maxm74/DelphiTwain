@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Dialogs, DelphiTwain, DelphiTwain_FMX,
-  FMX.Objects, FMX.StdCtrls, FMX.Graphics;
+  FMX.Objects, FMX.StdCtrls, FMX.Graphics, FMX.Controls.Presentation;
 
 type
   TForm1 = class(TForm)

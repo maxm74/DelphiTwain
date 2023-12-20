@@ -29,8 +29,8 @@ type
     procedure MessageTimer_Disable; override;
     function CustomSelectSource: Integer; override;
 
-    function DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                  nativeHandle: TW_UINT32; var Cancel: Boolean):Boolean; override;
+    procedure DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                  nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean); override;
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer;
                              imageHandle:HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
@@ -73,7 +73,7 @@ begin
   aFMXBitmap.Height := xWinBM.bmHeight;
 
   {$IFDEF DELPHI_XE3_UP}
-  aFMXBitmap.Map(TMapAccess.maWrite, xBMData);
+  aFMXBitmap.Map(TMapAccess.Write, xBMData);
   {$ENDIF}
   xDC := CreateCompatibleDC(0);
   try
@@ -147,11 +147,12 @@ begin
   FreeAndNil(fMessagesTimer);
 end;
 
-function TDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                           nativeHandle: TW_UINT32; var Cancel: Boolean): Boolean;
+procedure TDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
+                                           nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean);
 begin
   //MaxM: No need to create HBitmap if unused
-  Result:=Assigned(fOnTwainAcquire);
+  NeedBitmap:=Assigned(fOnTwainAcquire);
+  inherited DoTwainAcquireNative(Sender, Index, nativeHandle, NeedBitmap, Cancel);
 end;
 
 procedure TDelphiTwain.DoTwainAcquire(Sender: TObject; const Index: Integer;

@@ -42,7 +42,7 @@ begin
   inherited;
 
   Caption := DELPHITWAIN_SelectSource;
-  Position := TFormPosition.poOwnerFormCenter;
+  Position := TFormPosition.OwnerFormCenter;
   Width := 300;
   Height := 200;
   BorderIcons := [TBorderIcon.biSystemMenu];
@@ -52,7 +52,7 @@ begin
   LblCaption.Parent := Self;
   LblCaption.Text := Caption;
   LblCaption.Font.Size := 15;
-  LblCaption.StyledSettings := LblCaption.StyledSettings - [TStyledSetting.ssFamily, TStyledSetting.ssSize];
+  LblCaption.StyledSettings := LblCaption.StyledSettings - [TStyledSetting.Family, TStyledSetting.Size];
   LblCaption.Position.X := 3;
   LblCaption.Position.Y := 3;
   {$ENDIF}
@@ -98,7 +98,7 @@ begin
   Height := 200;//BUG WORKAROUND: XE5
 
   //BUG WORKAROUND XE5 -> FORM HEADER IS NOT SHOWN, SET COLOR BACKGROUND AT LEAST
-  Fill.Kind := TBrushKind.bkSolid;
+  Fill.Kind := TBrushKind.Solid;
   Fill.Color := $FFDDDDFF;
 end;
 {$ENDIF}

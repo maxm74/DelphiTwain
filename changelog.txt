@@ -21,6 +21,9 @@ DELPHITWAIN CHANGE LOG
              ReadNative not create the HBitmap if unused and delete it after if used;
              GetResolution distinguishes between Enum and array (A very serious mistake);
              Utils: WriteBitmapToFile with only HBitmap param
+          20 Renamed OnTwainAcquire to OnTwainAcquireBitmap (no confusion with derived classes) and changed params;
+             ReadNative don't free HBitmap;
+             Example updated and reduced to just 2 (shared with Delphi);
 
 2023/11 MaxM - Fixed various obscurities in code
              Added GetCapabilitySupportedOp
