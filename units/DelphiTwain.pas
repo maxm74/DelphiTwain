@@ -582,9 +582,7 @@ type
     fOnTransferComplete: TOnTransferComplete;
 
     fSelectedSourceIndex: Integer;
-    {Temp variable to allow SourceCount to be displayed in delphi}
-    {property editor}
-    fDummySourceCount: Integer;
+
     {Contains list of source devices}
     DeviceList: TPointerList;
     {Contains a pointer to the structure with the application}
@@ -617,7 +615,7 @@ type
     {Updates the application information object}
     procedure SetInfo(const Value: TTwainIdentity);
     {Returns the number of sources}
-    function GetSourceCount(): Integer;
+    function GetSourceCount: Integer;
     {Returns a source from the list}
     function GetSource(Index: Integer): TTwainSource;
     //Gets selected source
@@ -694,7 +692,7 @@ type
 
     {Finds a matching source and return Index}
     function FindSource(Value: pTW_IDENTITY): Integer; overload;
-    function FindSource(AID:TW_UINT32): Integer; overload;
+    function FindSource(AID: TW_UINT32): Integer; overload;
     function FindSource(Value: TTwainSource): Integer; overload;
     function FindSource(AManufacturer, AProductFamily, AProductName: String): Integer; overload;
     function FindSource(AProductName: String): Integer; overload;
@@ -705,6 +703,11 @@ type
     function FindSourceID(Value: TTwainSource): TW_UINT32; overload;
     function FindSourceID(AManufacturer, AProductFamily, AProductName: String): TW_UINT32; overload;
     function FindSourceID(AProductName: String): TW_UINT32; overload;
+
+    function SelectSource(Value: pTW_IDENTITY; Load: Boolean = False): TTwainSource; overload;
+    function SelectSource(AID: TW_UINT32; Load: Boolean = False): TTwainSource; overload;
+    function SelectSource(AManufacturer, AProductFamily, AProductName: String; Load: Boolean = False): TTwainSource; overload;
+    function SelectSource(AProductName: String; Load: Boolean = False): TTwainSource; overload;
 
     property AppIdentity: pTW_IDENTITY read AppInfo;
     {Returns Twain library handle}
@@ -746,7 +749,7 @@ type
     property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
     {Returns the number of sources, after Library and Source Manager}
     {has being loaded}
-    property SourceCount: Integer read GetSourceCount write fDummySourceCount;
+    property SourceCount: Integer read GetSourceCount;
     //Selected source by Index
     property SelectedSourceIndex: Integer read GetSelectedSourceIndex write SetSelectedSourceIndex;
     //Selected source by ID
@@ -1560,16 +1563,18 @@ var
   i       : Integer;
 
 begin
-  Result := -1; {Default result}
-
-  {Search for this source in the list}
-  for i :=0 to SourceCount-1 do
-    if CompareMem(@Source[i].Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
+  Result := -1;
+  if (LibraryLoaded and SourceManagerLoaded) then
+  begin
+    {Search for this source in the list}
+    for i :=0 to SourceCount-1 do
+    if CompareMem(@TTwainSource(DeviceList.Item[i]).Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
     begin
       {Return index and exit}
       Result := i;
       break;
     end; {if CompareMem, for i}
+  end;
 end;
 
 function TCustomDelphiTwain.FindSource(AID: TW_UINT32): Integer;
@@ -1578,12 +1583,13 @@ var
   curStr :TTwainSource;
 
 begin
-  Result :=-1;
-  for i:=0 to SourceCount-1 do
-  begin
-    if (Source[i].ID = AID)
-    then begin Result:=i; break; end;
-  end;
+ Result := -1;
+ if (LibraryLoaded and SourceManagerLoaded) then
+ for i:=0 to SourceCount-1 do
+ begin
+   if (TTwainSource(DeviceList.Item[i]).ID = AID)
+   then begin Result:=i; break; end;
+ end;
 end;
 
 function TCustomDelphiTwain.FindSource(Value: TTwainSource): Integer;
@@ -1597,10 +1603,11 @@ var
   curStr :TTwainSource;
 
 begin
-  Result :=-1;
+  Result := -1;
+  if (LibraryLoaded and SourceManagerLoaded) then
   for i:=0 to SourceCount-1 do
   begin
-    curStr:=Source[i];
+    curStr:= TTwainSource(DeviceList.Item[i]);
     { #todo -oMaxM : if there is more identical scanner? }
     if (curStr.Manufacturer=AManufacturer) and
        (curStr.ProductFamily=AProductFamily) and (curStr.ProductName=AProductName)
@@ -1613,11 +1620,12 @@ var
   i      :Integer;
 
 begin
-  Result :=-1;
+  Result := -1;
+  if (LibraryLoaded and SourceManagerLoaded) then
   for i:=0 to SourceCount-1 do
   begin
     { #todo -oMaxM : if there is more identical scanner? }
-    if (Source[i].ProductName=AProductName)
+    if (TTwainSource(DeviceList.Item[i]).ProductName=AProductName)
     then begin Result:=i; break; end;
   end;
 end;
@@ -1627,16 +1635,14 @@ var
   i       : Integer;
 
 begin
-  Result:= 0;
-
-  {Search for this source in the list}
-  for i :=0 to SourceCount-1 do
-    if CompareMem(@Source[i].Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
-    begin
-      {Return ID and exit}
-      Result := Value^.Id;
-      break;
-    end;
+ Result := 0;
+ if (LibraryLoaded and SourceManagerLoaded) then
+ for i :=0 to SourceCount-1 do
+ if CompareMem(@TTwainSource(DeviceList.Item[i]).Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
+ begin
+   Result:= Value^.Id;
+   break;
+ end;
 end;
 
 function TCustomDelphiTwain.FindSourceID(AID: TW_UINT32): Boolean;
@@ -1646,9 +1652,10 @@ var
 
 begin
   Result:= False;
+  if (LibraryLoaded and SourceManagerLoaded) then
   for i:=0 to SourceCount-1 do
   begin
-    if (Source[i].ID = AID)
+    if (TTwainSource(DeviceList.Item[i]).ID = AID)
     then begin Result:= True; break; end;
   end;
 end;
@@ -1665,9 +1672,10 @@ var
 
 begin
   Result :=0;
+  if (LibraryLoaded and SourceManagerLoaded) then
   for i:=0 to SourceCount-1 do
   begin
-    curStr:=Source[i];
+    curStr:= TTwainSource(DeviceList.Item[i]);
     { #todo -oMaxM : if there is more identical scanner? }
     if (curStr.Manufacturer=AManufacturer) and
        (curStr.ProductFamily=AProductFamily) and (curStr.ProductName=AProductName)
@@ -1682,13 +1690,54 @@ var
 
 begin
   Result :=0;
+  if (LibraryLoaded and SourceManagerLoaded) then
   for i:=0 to SourceCount-1 do
   begin
-    curStr:= Source[i];
+    curStr:= TTwainSource(DeviceList.Item[i]);
     { #todo -oMaxM : if there is more identical scanner? }
     if (curStr.ProductName=AProductName)
     then begin Result:=curStr.ID; break; end;
   end;
+end;
+
+function TCustomDelphiTwain.SelectSource(Value: pTW_IDENTITY; Load: Boolean): TTwainSource;
+begin
+  fSelectedSourceIndex:= FindSource(Value);
+  if (fSelectedSourceIndex > -1)
+  then Result:= TTwainSource(DeviceList.Item[fSelectedSourceIndex])
+  else Result:= nil;
+
+  if Load and (Result <> nil) then Result.Loaded:= True;
+end;
+
+function TCustomDelphiTwain.SelectSource(AID: TW_UINT32; Load: Boolean): TTwainSource;
+begin
+  fSelectedSourceIndex:= FindSource(AID);
+  if (fSelectedSourceIndex > -1)
+  then Result:= TTwainSource(DeviceList.Item[fSelectedSourceIndex])
+  else Result:= nil;
+
+  if Load and (Result <> nil) then Result.Loaded:= True;
+end;
+
+function TCustomDelphiTwain.SelectSource(AManufacturer, AProductFamily, AProductName: String; Load: Boolean): TTwainSource;
+begin
+  fSelectedSourceIndex:= FindSource(AManufacturer, AProductFamily, AProductName);
+  if (fSelectedSourceIndex > -1)
+  then Result:= TTwainSource(DeviceList.Item[fSelectedSourceIndex])
+  else Result:= nil;
+
+  if Load and (Result <> nil) then Result.Loaded:= True;
+end;
+
+function TCustomDelphiTwain.SelectSource(AProductName: String; Load: Boolean): TTwainSource;
+begin
+  fSelectedSourceIndex:= FindSource(AProductName);
+  if (fSelectedSourceIndex > -1)
+  then Result:= TTwainSource(DeviceList.Item[fSelectedSourceIndex])
+  else Result:= nil;
+
+  if Load and (Result <> nil) then Result.Loaded:= True;
 end;
 
 {Allows Twain to display a dialog to let the user choose any source}
@@ -1706,7 +1755,7 @@ begin
 end;
 
 {Returns the number of sources}
-function TCustomDelphiTwain.GetSourceCount(): Integer;
+function TCustomDelphiTwain.GetSourceCount: Integer;
 begin
   {Library and source manager must be loaded}
   if (LibraryLoaded and SourceManagerLoaded) then
@@ -1735,6 +1784,7 @@ end;
 {Returns a source from the list}
 function TCustomDelphiTwain.GetSelectedSource: TTwainSource;
 begin
+  { #note 10 -oMaxM : Must be optimized, SourceCount and Source do the same tests and re-enumerate devices }
   if SourceCount = 0 then begin
     Result := nil;
   end else begin
@@ -1766,7 +1816,6 @@ begin
   {Both library and source manager must be loaded}
   if (LibraryLoaded and SourceManagerLoaded) then
   begin
-
     {If index is in range, returns}
     {(Call to SourceCount property enumerates the devices, if needed)}
     if Index in [0..SourceCount - 1] then
