@@ -626,6 +626,11 @@ type
     function GetSelectedSourceIndex: Integer;
     //Sets selected source index
     procedure SetSelectedSourceIndex(const Value: Integer);
+    //Gets selected source ID
+    function GetSelectedSourceID: TW_UINT32;
+    //Sets selected source searching by ID if not the current selected
+    procedure SetSelectedSourceID(AValue: TW_UINT32);
+
     //Refresh the VirtualWindow - usually needed when transfer was completed
     procedure RefreshVirtualWindow;
 
@@ -687,11 +692,19 @@ type
     function UnloadSourceManager(forced: boolean): Boolean;
     {Returns the application TW_IDENTITY}
 
-    {Finds a matching source index}
+    {Finds a matching source and return Index}
     function FindSource(Value: pTW_IDENTITY): Integer; overload;
+    function FindSource(AID:TW_UINT32): Integer; overload;
     function FindSource(Value: TTwainSource): Integer; overload;
     function FindSource(AManufacturer, AProductFamily, AProductName: String): Integer; overload;
     function FindSource(AProductName: String): Integer; overload;
+
+    {Finds a matching source and return ID}
+    function FindSourceID(Value: pTW_IDENTITY): TW_UINT32; overload;
+    function FindSourceID(AID:TW_UINT32): Boolean; overload;
+    function FindSourceID(Value: TTwainSource): TW_UINT32; overload;
+    function FindSourceID(AManufacturer, AProductFamily, AProductName: String): TW_UINT32; overload;
+    function FindSourceID(AProductName: String): TW_UINT32; overload;
 
     property AppIdentity: pTW_IDENTITY read AppInfo;
     {Returns Twain library handle}
@@ -734,9 +747,11 @@ type
     {Returns the number of sources, after Library and Source Manager}
     {has being loaded}
     property SourceCount: Integer read GetSourceCount write fDummySourceCount;
-    //Selected source in a dialog
+    //Selected source by Index
     property SelectedSourceIndex: Integer read GetSelectedSourceIndex write SetSelectedSourceIndex;
-    //Selected source in a dialog
+    //Selected source by ID
+    property SelectedSourceID: TW_UINT32 read GetSelectedSourceID write SetSelectedSourceID;
+    //Selected source
     property SelectedSource: TTwainSource read GetSelectedSource;
     {User should fill the application information}
     property Info: TTwainIdentity read fInfo write SetInfo;
@@ -1508,6 +1523,11 @@ begin
   fSelectedSourceIndex := Value;
 end;
 
+procedure TCustomDelphiTwain.SetSelectedSourceID(AValue: TW_UINT32);
+begin
+  fSelectedSourceIndex:= FindSource(AValue);
+end;
+
 procedure TCustomDelphiTwain.SetSourceManagerLoaded(const Value: Boolean);
 begin
   {The library must be loaded to have access to the method}
@@ -1543,13 +1563,27 @@ begin
   Result := -1; {Default result}
 
   {Search for this source in the list}
-  for i := 0 TO SourceCount - 1 DO
+  for i :=0 to SourceCount-1 do
     if CompareMem(@Source[i].Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
     begin
       {Return index and exit}
       Result := i;
       break;
     end; {if CompareMem, for i}
+end;
+
+function TCustomDelphiTwain.FindSource(AID: TW_UINT32): Integer;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result :=-1;
+  for i:=0 to SourceCount-1 do
+  begin
+    if (Source[i].ID = AID)
+    then begin Result:=i; break; end;
+  end;
 end;
 
 function TCustomDelphiTwain.FindSource(Value: TTwainSource): Integer;
@@ -1585,6 +1619,75 @@ begin
     { #todo -oMaxM : if there is more identical scanner? }
     if (Source[i].ProductName=AProductName)
     then begin Result:=i; break; end;
+  end;
+end;
+
+function TCustomDelphiTwain.FindSourceID(Value: pTW_IDENTITY): TW_UINT32;
+var
+  i       : Integer;
+
+begin
+  Result:= 0;
+
+  {Search for this source in the list}
+  for i :=0 to SourceCount-1 do
+    if CompareMem(@Source[i].Structure, PAnsiChar(Value), SizeOf(TW_IDENTITY)) then
+    begin
+      {Return ID and exit}
+      Result := Value^.Id;
+      break;
+    end;
+end;
+
+function TCustomDelphiTwain.FindSourceID(AID: TW_UINT32): Boolean;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result:= False;
+  for i:=0 to SourceCount-1 do
+  begin
+    if (Source[i].ID = AID)
+    then begin Result:= True; break; end;
+  end;
+end;
+
+function TCustomDelphiTwain.FindSourceID(Value: TTwainSource): TW_UINT32;
+begin
+  Result :=FindSourceID(Value.Manufacturer, Value.ProductFamily, Value.ProductName);
+end;
+
+function TCustomDelphiTwain.FindSourceID(AManufacturer, AProductFamily, AProductName: String): TW_UINT32;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result :=0;
+  for i:=0 to SourceCount-1 do
+  begin
+    curStr:=Source[i];
+    { #todo -oMaxM : if there is more identical scanner? }
+    if (curStr.Manufacturer=AManufacturer) and
+       (curStr.ProductFamily=AProductFamily) and (curStr.ProductName=AProductName)
+    then begin Result:=curStr.ID; break; end;
+  end;
+end;
+
+function TCustomDelphiTwain.FindSourceID(AProductName: String): TW_UINT32;
+var
+  i      :Integer;
+  curStr :TTwainSource;
+
+begin
+  Result :=0;
+  for i:=0 to SourceCount-1 do
+  begin
+    curStr:= Source[i];
+    { #todo -oMaxM : if there is more identical scanner? }
+    if (curStr.ProductName=AProductName)
+    then begin Result:=curStr.ID; break; end;
   end;
 end;
 
@@ -1645,6 +1748,17 @@ end;
 function TCustomDelphiTwain.GetSelectedSourceIndex: Integer;
 begin
   Result := fSelectedSourceIndex;
+end;
+
+function TCustomDelphiTwain.GetSelectedSourceID: TW_UINT32;
+var
+   rSelectedSource: TTwainSource;
+
+begin
+  rSelectedSource:= SelectedSource;
+  if (rSelectedSource <> nil)
+  then Result:= rSelectedSource.ID
+  else Result:= 0;
 end;
 
 function TCustomDelphiTwain.GetSource(Index: Integer): TTwainSource;
