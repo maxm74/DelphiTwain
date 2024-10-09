@@ -59,6 +59,7 @@ type
   TArraySingle = array of Single;
   TArrayInteger = array of Integer;
   TStringArray = array of String;
+  TArrayTW_IDENTITY = array of TW_IDENTITY;
 
   {From twain}
   TW_STR255 = Twain.TW_STR255;
@@ -671,7 +672,7 @@ type
 
     {Allows Twain to display a dialog to let the user choose any source}
     {and returns the source index in the list}
-    function SelectSource: Integer;
+    function SelectSource: Integer; overload;
     {Returns the number of loaded sources}
     property SourcesLoaded: Integer read fSourcesLoaded;
     {Enumerate the avaliable devices after Source Manager is loaded}

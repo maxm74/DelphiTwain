@@ -32,16 +32,24 @@
         <UnitName Value="DelphiTwain_VCL"/>
       </Item>
       <Item>
-        <Filename Value="units\uFormSelectSource_VCL.pas"/>
-        <UnitName Value="uFormSelectSource_VCL"/>
-      </Item>
-      <Item>
         <Filename Value="units\DelphiTwainLang.pas"/>
         <UnitName Value="DelphiTwainLang"/>
       </Item>
       <Item>
         <Filename Value="units\DelphiTwainUtils.pas"/>
         <UnitName Value="DelphiTwainUtils"/>
+      </Item>
+      <Item>
+        <Filename Value="units\DelphiTwainTypes.pas"/>
+        <UnitName Value="DelphiTwainTypes"/>
+      </Item>
+      <Item>
+        <Filename Value="units\DelphiTwain_SelectForm.pas"/>
+        <UnitName Value="DelphiTwain_SelectForm"/>
+      </Item>
+      <Item>
+        <Filename Value="units\DelphiTwain_SettingsForm.pas"/>
+        <UnitName Value="DelphiTwain_SettingsForm"/>
       </Item>
     </Files>
     <RequiredPkgs>

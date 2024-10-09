@@ -1,6 +1,10 @@
 DELPHITWAIN CHANGE LOG
 ======================
 
+2024/09/10 MaxM - Added Select and Settings Forms taken from Project DigIt by changing parameters, field names and types          
+	   Deleted obsolet uFormSelectSource_VCL and Twain_o;
+           Delphi Compatibility for Forms;   
+
 2023/12 MaxM - CapabilityCanGet/Set; GetOneValue overloads; GetIndicators; Get/Set AutoScan;
 	     SetFeederEnabled set also AutoScan and AutoFeed;
 	     Paper Feeding Get/Set in TTwainPaperFeedingSet; GetOrientation

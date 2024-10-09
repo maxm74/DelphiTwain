@@ -8,7 +8,8 @@ unit DelphiTwain_pkg;
 interface
 
 uses
-  Twain, DelphiTwain, DelphiTwain_VCL, uFormSelectSource_VCL, DelphiTwainLang, DelphiTwainUtils, LazarusPackageIntf;
+  Twain, DelphiTwain, DelphiTwain_VCL, DelphiTwainLang, DelphiTwainUtils, DelphiTwainTypes, DelphiTwain_SelectForm, 
+  DelphiTwain_SettingsForm, LazarusPackageIntf;
 
 implementation
 

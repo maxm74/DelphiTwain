@@ -60,7 +60,7 @@ type
 
 implementation
 
-uses uFormSelectSource_VCL, Controls;
+uses DelphiTwainTypes, DelphiTwain_SelectForm, Controls;
 
 {$IFDEF USE_CENTRALIZED_WIN}
 
@@ -103,33 +103,19 @@ end;
 
 function TDelphiTwain.CustomSelectSource: Integer;
 var
-  xForm: TFormSelectSource;
-  I: Integer;
+  newSelectedInfo: TTwainDeviceInfo;
+
 begin
   Result := -1;
   if SourceCount = 0 then begin
     Exit;
   end;
-
-  xForm := TFormSelectSource.CreateNew(nil);
   try
-    for I := 0 to SourceCount-1 do
-      xForm.LBSources.Items.Add(Source[I].ProductName);
+     if TTwainSelectSource.Execute('', '', (*@RefreshList*)nil, Self, nil, newSelectedInfo)
+     then Result:= TwainSelectSource.SelectedIndex;
 
-    xForm.LBSources.ItemIndex := 0;
-    if (SelectedSourceIndex >= 0) and (SelectedSourceIndex < xForm.LBSources.Items.Count) then
-      xForm.LBSources.ItemIndex := SelectedSourceIndex;
-
-    {$IFDEF DELPHI_2006_UP}
-    xForm.PopupMode := pmAuto;
-    {$ENDIF}
-    if xForm.ShowModal = mrOK then begin
-      Result := xForm.LBSources.ItemIndex;
-    end else begin
-      Result := -1;
-    end;
   finally
-    xForm.Free;
+    TwainSelectSource.Free; TwainSelectSource:= Nil;
   end;
 end;
 

@@ -109,12 +109,21 @@
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vcl.dcp"/>
+        <DCCReference Include="VclSmp.dcp"/>
         <DCCReference Include="units\Twain.pas"/>
         <DCCReference Include="units\DelphiTwain.pas"/>
         <DCCReference Include="units\DelphiTwain_VCL.pas"/>
         <DCCReference Include="units\DelphiTwainLang.pas"/>
         <DCCReference Include="units\DelphiTwainUtils.pas"/>
-        <DCCReference Include="units\uFormSelectSource_VCL.pas"/>
+        <DCCReference Include="units\DelphiTwain_SelectForm.pas">
+            <Form>TwainSelectSource</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="units\DelphiTwain_SettingsForm.pas">
+            <Form>TwainSettingsSource</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="units\DelphiTwainTypes.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

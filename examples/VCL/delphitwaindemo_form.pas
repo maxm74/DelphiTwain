@@ -10,7 +10,8 @@ interface
 
 uses
   Windows, Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Twain, DelphiTwain, DelphiTwainUtils, DelphiTwain_VCL;
+  ExtCtrls, Twain, DelphiTwain, DelphiTwainUtils, DelphiTwainTypes, DelphiTwain_VCL,
+  DelphiTwain_SettingsForm;
 
 type
 
@@ -21,14 +22,8 @@ type
     btSelect: TButton;
     cbNativeCapture: TCheckBox;
     cbModalCapture: TCheckBox;
-    cbPaperSize: TComboBox;
-    cbPixelType: TComboBox;
-    cbResolution: TComboBox;
     cbShowUI: TCheckBox;
     ImageHolder: TImage;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label7: TLabel;
     Panel1: TPanel;
     procedure btSelectClick(Sender: TObject);
     procedure btAcquireClick(Sender: TObject);
@@ -36,15 +31,8 @@ type
   private
     rTwain:TDelphiTwain;
     capRet: TCapabilityRet;
-    PaperSizeSet: TTwainPaperSizeSet;
-    PaperSizeCurrent,
-    PaperSizeDefault: TTwainPaperSize;
-    PixelType:TTwainPixelTypeSet;
-    PixelTypeCurrent,
-    PixelTypeDefault:TTwainPixelType;
-    ResolutionDefault,
-    ResolutionCurrent:Single;
-    ResolutionArray: TTwainResolution;
+    TwainCap: TTwainParamsCapabilities;
+    TwainParams: TTwainParams;
 
     function getTwain: TDelphiTwain;
 
@@ -79,47 +67,54 @@ var
    TwainSource:TTwainSource;
 
 begin
+    //Show Select Form and User Select a device
+    Twain.SelectedSource;
+
     if Assigned(Twain.SelectedSource) then
     begin
-      TwainSource :=Twain.SelectedSource;
-
       aPath:=ExtractFilePath(ParamStr(0))+'test_0.bmp';
       if FileExists(aPath)
       then DeleteFile(aPath);
 
+      TwainSource :=Twain.SelectedSource;
       TwainSource.Loaded := True;
 
-      //Fill Params with new values
-      if (cbPaperSize.ItemIndex>-1)
-      then PaperSizeCurrent:=TTwainPaperSize(Integer(cbPaperSize.Items.Objects[cbPaperSize.ItemIndex]));
+      try
+        //Select Scanner Setting to use
+        if TTwainSettingsSource.Execute(True, TwainCap, TwainParams) then
+        begin
+          with TwainParams do
+          begin
+            capRet :=TwainSource.SetPaperFeeding(PaperFeed);
+            capRet :=TwainSource.SetDuplexEnabled(False);
+            capRet :=TwainSource.SetPaperSize(PaperSize);
+            capRet :=TwainSource.SetIPixelType(PixelType);
 
-      if (cbPixelType.ItemIndex>-1)
-      then PixelTypeCurrent:=TTwainPixelType(Integer(cbPixelType.Items.Objects[cbPixelType.ItemIndex]));
+            capRet :=TwainSource.SetIXResolution(Resolution);
+            capRet :=TwainSource.SetIYResolution(Resolution);
+            capRet :=TwainSource.SetContrast(Contrast);
+            capRet :=TwainSource.SetBrightness(Brightness);
+          end;
+          capRet :=TwainSource.SetIndicators(True);
 
-      if (cbResolution.ItemIndex>-1)
-      then ResolutionCurrent:=ResolutionArray[Integer(cbResolution.Items.Objects[cbResolution.ItemIndex])];
+          //Load source, select transference method and enable
+          TwainSource.TransferMode:=ttmNative;
 
-      capRet :=TwainSource.SetPaperSize(PaperSizeCurrent);
-      capRet :=TwainSource.SetIPixelType(PixelTypeCurrent);
-      capRet :=TwainSource.SetIXResolution(ResolutionCurrent);
-      capRet :=TwainSource.SetIYResolution(ResolutionCurrent);
+          if cbNativeCapture.Checked
+          then begin
+                 Twain.OnTwainAcquireNative:=TwainAcquireNative;
+                 Twain.OnTwainAcquire:=nil;
+               end
+          else begin
+                 Twain.OnTwainAcquireNative:=nil;
+                 Twain.OnTwainAcquire:=TwainAcquire;
+               end;
 
-      capRet :=TwainSource.SetIndicators(True);
-
-      //Load source, select transference method and enable
-      TwainSource.TransferMode:=ttmNative;
-
-      if cbNativeCapture.Checked
-      then begin
-             Twain.OnTwainAcquireNative:=TwainAcquireNative;
-             Twain.OnTwainAcquire:=nil;
-           end
-      else begin
-             Twain.OnTwainAcquireNative:=nil;
-             Twain.OnTwainAcquire:=TwainAcquire;
-           end;
-
-      TwainSource.EnableSource(cbShowUI.Checked, cbModalCapture.Checked, Application.ActiveFormHandle);
+          TwainSource.EnableSource(cbShowUI.Checked, cbModalCapture.Checked, Application.ActiveFormHandle);
+        end;
+      finally
+        TwainSettingsSource.Free; TwainSettingsSource:= Nil;
+      end;
     end;
 end;
 
@@ -131,15 +126,14 @@ end;
 procedure TFormTwainDemo.btSelectClick(Sender: TObject);
 var
   TwainSource:TTwainSource;
-  paperI: TTwainPaperSize;
-  pixelI:TTwainPixelType;
+  bitCurrent: Integer;
+  paperCurrent: TTwainPaperSize;
+  pixelCurrent:TTwainPixelType;
+  resolutionCurrent:Single;
   i, cbSelected: Integer;
 
 begin
     btAcquire.Enabled :=False;
-    cbPaperSize.Clear;
-    cbPixelType.Clear;
-    cbResolution.Clear;
 
     //Load source manager
     Twain.SourceManagerLoaded :=True;
@@ -152,45 +146,13 @@ begin
 
       TwainSource.Loaded:=True;
 
-      //Get Params
-      capRet :=TwainSource.GetPaperSizeSet(PaperSizeCurrent, PaperSizeDefault, PaperSizeSet);
-      capRet :=TwainSource.GetIPixelType(PixelTypeCurrent, PixelTypeDefault, PixelType);
-      capRet :=TwainSource.GetIXResolution(ResolutionCurrent, ResolutionDefault, ResolutionArray);
-
-      //Fill List of Papers
-      cbSelected :=0;
-      cbPaperSize.Items.AddObject('Full Scanner size', TObject(Integer(tpsNONE)));
-      for paperI in PaperSizeSet do
-      begin
-        if (paperI<>tpsNONE) and (paperI<>tpsMAXSIZE)
-        then cbPaperSize.Items.AddObject(PaperSizesTwain[paperI].name+
-               ' ('+FloatToStrF(PaperSizesTwain[paperI].w, ffFixed, 15, 2)+' x '+
-                    FloatToStrF(PaperSizesTwain[paperI].h, ffFixed, 15, 2)+')',
-               TObject(Integer(paperI)));
-
-        if (paperI=PaperSizeCurrent) then cbSelected :=cbPaperSize.Items.Count-1;
-      end;
-      cbPaperSize.ItemIndex:=cbSelected;
-
-      //Fill List of Pixel Type
-      cbSelected :=0;
-      for pixelI in PixelType do
-      begin
-        cbPixelType.Items.AddObject(TwainPixelTypes[pixelI], TObject(Integer(pixelI)));
-
-        if (pixelI=PixelTypeCurrent) then cbSelected :=cbPixelType.Items.Count-1;
-      end;
-      cbPixelType.ItemIndex:=cbSelected;
-
-      //Fill List of Resolution (Y Resolution=X Resolution)
-      cbSelected :=0;
-      for i:=Low(ResolutionArray) to High(ResolutionArray) do
-      begin
-        cbResolution.Items.AddObject(FloatToStr(ResolutionArray[i]), TObject(Integer(i)));
-
-        if (ResolutionArray[i] = ResolutionCurrent) then cbSelected :=cbResolution.Items.Count-1;
-      end;
-      cbResolution.ItemIndex:=cbSelected;
+      TwainCap.PaperFeedingSet:=TwainSource.GetPaperFeeding;
+      capRet :=TwainSource.GetPaperSizeSet(paperCurrent, TwainCap.PaperSizeDefault, TwainCap.PaperSizeSet);
+      capRet :=TwainSource.GetIBitDepth(bitCurrent, TwainCap.BitDepthDefault, TwainCap.BitDepthArray);
+      TwainCap.BitDepthArraySize :=Length(TwainCap.BitDepthArray);
+      capRet :=TwainSource.GetIPixelType(pixelCurrent, TwainCap.PixelTypeDefault, TwainCap.PixelType);
+      capRet :=TwainSource.GetIXResolution(resolutionCurrent, TwainCap.ResolutionDefault, TwainCap.ResolutionArray);
+      TwainCap.ResolutionArraySize :=Length(TwainCap.ResolutionArray);
 
       btAcquire.Enabled :=True;
     end;

@@ -10,8 +10,8 @@ object FormTwainDemo: TFormTwainDemo
   OnDestroy = FormDestroy
   object ImageHolder: TImage
     Left = 0
-    Height = 512
-    Top = 64
+    Height = 536
+    Top = 40
     Width = 769
     Align = alClient
     Proportional = True
@@ -19,15 +19,15 @@ object FormTwainDemo: TFormTwainDemo
   end
   object Panel1: TPanel
     Left = 0
-    Height = 64
+    Height = 40
     Top = 0
     Width = 769
     Align = alTop
-    ClientHeight = 64
+    ClientHeight = 40
     ClientWidth = 769
     TabOrder = 0
     object btAcquire: TButton
-      Left = 685
+      Left = 680
       Height = 32
       Top = 0
       Width = 75
@@ -45,79 +45,31 @@ object FormTwainDemo: TFormTwainDemo
       TabOrder = 1
       OnClick = btSelectClick
     end
-    object Label2: TLabel
-      Left = 8
-      Height = 15
-      Top = 34
-      Width = 36
-      Caption = 'Paper :'
-    end
-    object cbPaperSize: TComboBox
-      Left = 46
-      Height = 23
-      Top = 34
-      Width = 192
-      ItemHeight = 15
-      Style = csDropDownList
-      TabOrder = 2
-    end
-    object Label7: TLabel
-      Left = 240
-      Height = 15
-      Top = 34
-      Width = 66
-      Caption = 'Image Type :'
-    end
-    object cbPixelType: TComboBox
-      Left = 310
-      Height = 23
-      Top = 34
-      Width = 192
-      ItemHeight = 15
-      Style = csDropDownList
-      TabOrder = 3
-    end
-    object Label3: TLabel
-      Left = 504
-      Height = 15
-      Top = 34
-      Width = 62
-      Caption = 'Resolution :'
-    end
-    object cbResolution: TComboBox
-      Left = 568
-      Height = 23
-      Top = 34
-      Width = 192
-      ItemHeight = 15
-      Style = csDropDownList
-      TabOrder = 4
-    end
     object cbNativeCapture: TCheckBox
-      Left = 469
+      Left = 456
       Height = 19
       Top = 0
       Width = 97
       Caption = 'Native Capture'
       Checked = True
       State = cbChecked
-      TabOrder = 5
+      TabOrder = 2
     end
     object cbModalCapture: TCheckBox
-      Left = 568
+      Left = 555
       Height = 19
       Top = 0
       Width = 52
       Caption = 'Modal'
-      TabOrder = 6
+      TabOrder = 3
     end
     object cbShowUI: TCheckBox
-      Left = 624
+      Left = 611
       Height = 19
       Top = 0
       Width = 58
       Caption = 'ShowUI'
-      TabOrder = 7
+      TabOrder = 4
     end
   end
 end
