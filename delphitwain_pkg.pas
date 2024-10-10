@@ -9,14 +9,8 @@ interface
 
 uses
   Twain, DelphiTwain, DelphiTwain_VCL, DelphiTwainLang, DelphiTwainUtils, DelphiTwainTypes, DelphiTwain_SelectForm, 
-  DelphiTwain_SettingsForm, LazarusPackageIntf;
+  DelphiTwain_SettingsForm;
 
 implementation
 
-procedure Register;
-begin
-end;
-
-initialization
-  RegisterPackage('DelphiTwain_pkg', @Register);
 end.

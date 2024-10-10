@@ -3,7 +3,6 @@
   <Package Version="5">
     <PathDelim Value="\"/>
     <Name Value="DelphiTwain_pkg"/>
-    <Type Value="RunAndDesignTime"/>
     <CompilerOptions>
       <Version Value="11"/>
       <PathDelim Value="\"/>
@@ -11,13 +10,8 @@
         <OtherUnitFiles Value="units"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
-      <CodeGeneration>
-        <Optimizations>
-          <OptimizationLevel Value="0"/>
-        </Optimizations>
-      </CodeGeneration>
     </CompilerOptions>
-    <Version Major="2" Minor="2"/>
+    <Version Major="2" Minor="3"/>
     <Files>
       <Item>
         <Filename Value="units\Twain.pas"/>
