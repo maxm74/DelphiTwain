@@ -1,6 +1,7 @@
 DELPHITWAIN CHANGE LOG
 ======================
-
+2024/11/06 MaxM - Changed GetTwainDirectory function to tests 32/64 bit dll
+        
 2024/09/10 MaxM - Added Select and Settings Forms taken from Project DigIt by changing parameters, field names and types          
 	   Deleted obsolet uFormSelectSource_VCL and Twain_o;
            Delphi Compatibility for Forms;   

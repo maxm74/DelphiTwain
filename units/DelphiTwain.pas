@@ -41,10 +41,13 @@ uses
 
 const
   {Name of the Twain library for 32 bits enviroment}
+  TWAINLIBRARY_64 = 'TWAINDSM.DLL';
+  TWAINLIBRARY_32 = 'TWAIN_32.DLL';
+
   {$IFDEF WIN64}
-  TWAINLIBRARY: String = 'TWAINDSM.DLL';
+  TWAINLIBRARY = TWAINLIBRARY_64;
   {$ELSE}
-  TWAINLIBRARY: String = 'TWAIN_32.DLL';
+  TWAINLIBRARY = TWAINLIBRARY_32;
   {$ENDIF}
 
   {Error codes}
@@ -801,6 +804,10 @@ function StrToStr255(Value: RawByteString): TW_STR255;
 {$ELSE}
 function StrToStr255(Value: String): TW_STR255;
 {$ENDIF}
+
+{Returns full Twain directory (usually in Windows directory)}
+function GetTwainDirectory(ALib: String = TWAINLIBRARY): String;
+
 {This method returns if Twain is installed in the current machine}
 function IsTwainInstalled(): Boolean;
 
@@ -862,7 +869,7 @@ begin
 end;
 
 {Returns full Twain directory (usually in Windows directory)}
-function GetTwainDirectory(): String;
+function GetTwainDirectory(ALib: String = TWAINLIBRARY): String;
 var
   i: TDirectoryKind;
   Dir: String;
@@ -874,7 +881,7 @@ begin
     {Directory to search}
     Dir := GetCustomDirectory(i);
     {Tests if the file exists in this directory}
-    if FileExists(Dir + String(TWAINLIBRARY)) then
+    if FileExists(Dir + ALib) then
     begin
       {In case it exists, returns this directory and exit}
       {the for loop}
