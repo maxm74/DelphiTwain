@@ -3623,6 +3623,10 @@ var
   {Image handle and pointer}
   ImageHandle: HBitmap;
   PixelType  : TW_INT16;
+
+  Info_Str: String;
+  Info_Format: TTwainFormat;
+
 begin
   {Set the transfer mode}
   //npeter:
@@ -3653,7 +3657,11 @@ begin
       begin
         {Event to allow user to set the file transfer information}
         if Assigned(Owner.OnSourceSetupFileXfer) then
-          Owner.OnSourceSetupFileXfer(Owner, Index);
+        begin
+         //Info_FileName := Info.FileName;  { #todo 5 -oMaxM : Pass Info to Event so we can change file name }
+         //Info_Format := FormatToTwain[Format];
+          Owner.OnSourceSetupFileXfer(Owner, Index); //, Info);
+        end;
         Owner.TwainProc(AppInfo, @Structure, DG_CONTROL, DAT_SETUPFILEXFER,
           MSG_GET, @Info);
         {Call method to make source acquire and create file}
