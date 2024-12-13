@@ -35,28 +35,16 @@ type
     TwainParams: TTwainParams;
     TwainSource: TTwainSource;
 
-    rDownloaded: Boolean;
-    rDownload_Count: Integer;
-    rDownload_Path,
-    rDownload_Ext,
-    rDownload_FileName: String;
-
-
     function getTwain: TDelphiTwain;
 
     property Twain: TDelphiTwain read getTwain;
 
+    function TwainProcessMessages(Sender: TObject; const Index: Integer): Boolean;
+
     procedure TwainAcquireNative(Sender: TObject; const Index: Integer;
                                 nativeHandle: TW_UINT32; var Cancel: Boolean);
-
     procedure TwainAcquire(Sender: TObject; const Index: Integer;
                            Image: TBitmap; var Cancel: Boolean);
-
-    procedure TransferComplete(Sender: TObject; const Index: Integer; const Canceled: Boolean);
-
-    function Download(APath, AFileName, AExt: String): Integer; overload;
-    function Download(APath, AFileName, AExt: String; var DownloadedFiles: TStringArray): Integer; overload;
-
   end;
 
 var
@@ -78,6 +66,7 @@ procedure TFormTwainDemo.btAcquireClick(Sender: TObject);
 var
    aPath:String;
    res: Integer;
+   rUserInterface: TW_USERINTERFACE;
 
 begin
     //Show Select Form and User Select a device
@@ -111,23 +100,22 @@ begin
           end;
           capRet :=TwainSource.SetIndicators(True);
 
-          (*
-          //Load source, select transference method and enable
-          TwainSource.TransferMode:=ttmNative;
-
           if cbNativeCapture.Checked
           then begin
+                 TwainSource.TransferMode:=ttmNative;
                  Twain.OnTwainAcquireNative:=TwainAcquireNative;
                  Twain.OnTwainAcquire:=nil;
                end
           else begin
+                 TwainSource.TransferMode:=ttmFile;
                  Twain.OnTwainAcquireNative:=nil;
                  Twain.OnTwainAcquire:=TwainAcquire;
                end;
 
-          TwainSource.EnableSource(cbShowUI.Checked, cbModalCapture.Checked, Application.ActiveFormHandle);
-          *)
-          res:= Download(ExtractFilePath(ParamStr(0)), 'test', '.bmp');
+          rUserInterface.hParent:= Application.ActiveFormHandle;
+          rUserInterface.ModalUI:= cbModalCapture.Checked;
+          rUserInterface.ShowUI:= cbShowUI.Checked;
+          res:= TwainSource.Download(rUserInterface, ExtractFilePath(ParamStr(0)), 'test', '.bmp', tfBMP);
 
           if (res > 0)
           then begin
@@ -187,6 +175,7 @@ begin
   if (rTwain = nil) then
   begin
     rTwain := TDelphiTwain.Create;
+    rTwain.OnProcessMessages:= TwainProcessMessages;
     //Load Twain Library dynamically
     if not(rTwain.LoadLibrary) then ShowMessage('Twain is not installed.');
   end;
@@ -194,15 +183,21 @@ begin
   Result :=rTwain;
 end;
 
+function TFormTwainDemo.TwainProcessMessages(Sender: TObject; const Index: Integer): Boolean;
+begin
+  Application.ProcessMessages;
+  Result:= True;
+end;
+
 procedure TFormTwainDemo.TwainAcquireNative(Sender: TObject; const Index: Integer;
   nativeHandle: TW_UINT32; var Cancel: Boolean);
 begin
+  with TCustomDelphiTwain(Sender).Source[Index] do
   try
-    if (rDownload_Count = 0)
-    then WriteBitmapToFile(rDownload_Path+rDownload_FileName+rDownload_Ext, nativeHandle)
-    else WriteBitmapToFile(rDownload_Path+rDownload_FileName+
-                           '-'+IntToStr(rDownload_Count)+rDownload_Ext, nativeHandle);
-    inc(rDownload_Count);
+    if (Download_Count = 0)
+    then WriteBitmapToFile(Download_Path+Download_FileName+Download_Ext, nativeHandle)
+    else WriteBitmapToFile(Download_Path+Download_FileName+
+                           '-'+IntToStr(Download_Count)+Download_Ext, nativeHandle);
 
     Cancel := False;
   except
@@ -211,83 +206,19 @@ end;
 
 procedure TFormTwainDemo.TwainAcquire(Sender: TObject; const Index: Integer;
   Image: TBitmap; var Cancel: Boolean);
-var
-   Pict: TPicture;
-
 begin
+  with TCustomDelphiTwain(Sender).Source[Index] do
   try
-    Pict:= TPicture.Create;
-    Pict.Assign(Image);
-
-    if (rDownload_Count = 0)
-    then Pict.SaveToFile(rDownload_Path+rDownload_FileName+rDownload_Ext)
-    else Pict.SaveToFile(rDownload_Path+rDownload_FileName+
-                         '-'+IntToStr(rDownload_Count)+rDownload_Ext);
-    inc(rDownload_Count);
-
-    (* ImageHolder.Picture.Bitmap.Assign(Image);
-     ImageHolder.Picture.Bitmap.SaveToFile('test_0.bmp'); *)
-
-     Cancel := False;
-  finally
-    Pict.Free;
+   (* if (Download_Count = 0)
+    then WriteBitmapToFile(Download_Path+Download_FileName+Download_Ext, nativeHandle)
+    else WriteBitmapToFile(Download_Path+Download_FileName+
+                           '-'+IntToStr(Download_Count)+Download_Ext, nativeHandle);
+    *)
+    Cancel := False;
+  except
   end;
 end;
 
-procedure TFormTwainDemo.TransferComplete(Sender: TObject; const Index: Integer; const Canceled: Boolean);
-begin
-  rDownloaded:= True;
-end;
-
-function TFormTwainDemo.Download(APath, AFileName, AExt: String): Integer;
-begin
-  if (APath = '') or CharInSet(APath[Length(APath)], AllowDirectorySeparators)
-  then rDownload_Path:= APath
-  else rDownload_Path:= APath+DirectorySeparator;
-
-  if not(ForceDirectories(rDownload_Path)) then exit;
-
-  rDownload_FileName:= AFileName;
-  rDownload_Ext:= AExt;
-  rDownload_Count:= 0;
-  rDownloaded:= False;
-
-  //Load source, select transference method and enable
-
-
-  if cbNativeCapture.Checked
-  then begin
-         TwainSource.TransferMode:= ttmNative;
-         Twain.OnTwainAcquireNative:=TwainAcquireNative;
-         Twain.OnTwainAcquire:=nil;
-       end
-  else begin
-         TwainSource.TransferMode:= ttmFile;
-         TwainSource.SetupFileTransfer('test.bmp', tfBMP);
-         Twain.OnTwainAcquireNative:=nil;
-         Twain.OnTwainAcquire:=TwainAcquire;
-       end;
-  Twain.OnTransferComplete:= TransferComplete;
-
-  TwainSource.EnableSource(cbShowUI.Checked, cbModalCapture.Checked, Application.ActiveFormHandle);
-
-  repeat
-    CheckSynchronize(10);
-    Application.ProcessMessages;
-  until rDownloaded;
-
-  rDownloaded:= (rDownload_Count > 0);
-
-  if rDownloaded
-  then Result:= rDownload_Count
-  else Result:= 0;
-end;
-
-function TFormTwainDemo.Download(APath, AFileName, AExt: String;
-  var DownloadedFiles: TStringArray): Integer;
-begin
-
-end;
 
 end.
 

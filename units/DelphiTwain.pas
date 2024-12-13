@@ -122,6 +122,7 @@ type
   TOnTwainError = procedure(Sender: TObject; const Index: Integer; ErrorCode,
     Additional: Integer) of object;
   TOnSourceNotify = procedure(Sender: TObject; const Index: Integer) of object;
+  TOnSourceBoolNotify = function(Sender: TObject; const Index: Integer): Boolean of object;
   TOnTransferComplete = procedure(Sender: TObject; const Index: Integer; const Canceled: Boolean) of object;
   TOnSourceFileTransfer = procedure(Sender: TObject; const Index: Integer;
     Filename: TW_STR255; Format: TTwainFormat; var Cancel: Boolean) of object;
@@ -281,6 +282,14 @@ type
       var Values: TTwainResolution): TCapabilityRet;
 
   protected
+    rDownloaded,
+    rDownload_Done,
+    rDownload_Cancelled: Boolean;
+    rDownload_Count: Integer;
+    rDownload_Path,
+    rDownload_Ext,
+    rDownload_FileName: String;
+
     {Reads a native image}
     procedure ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
     {Reads the file image}
@@ -396,7 +405,12 @@ type
       List: TSetCapabilityList): TCapabilityRet;
 
     {Setup file transfer}
-    function SetupFileTransfer(Filename: String; Format: TTwainFormat): Boolean;
+    function SetupFileTransfer(APath, AFileName, AExt: String; Format: TTwainFormat): Boolean;
+
+    function Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
+                      Format: TTwainFormat): Integer; overload;
+    function Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
+                      Format: TTwainFormat; var DownloadedFiles: TStringArray): Integer; overload;
 
     {Set source transfer mode}
     //function ChangeTransferMode(NewMode: TTwainTransferMode): TCapabilityRet;
@@ -534,6 +548,14 @@ type
 
     {Returns number of pending transfer}
     property PendingXfers: TW_INT16 read GetPendingXfers;
+
+    property Downloaded: Boolean read rDownloaded;
+    property Download_Cancelled: Boolean read rDownload_Cancelled;
+    property Download_Count: Integer read rDownload_Count;
+    property Download_Path: String read rDownload_Path;
+    property Download_Ext: String read rDownload_Ext;
+    property Download_FileName: String read rDownload_FileName;
+
     {Returns a pointer to the source identity}
     property SourceIdentity: pTW_IDENTITY read GetStructure;
     {Returns/sets if the source is enabled}
@@ -611,6 +633,7 @@ type
     rOnAcquireProgress: TAcquireProgressEvent;
     rOnTwainAcquireNative: TTwainAcquireNativeEvent;
     rOnTwainAcquireBitmap: TTwainAcquireBitmapEvent;
+    rOnProcessMessages: TOnSourceBoolNotify;
 
     {Procedure to load and unload twain library and update property}
     procedure SetLibraryLoaded(const Value: Boolean);
@@ -748,6 +771,7 @@ type
     property OnTwainAcquireNative: TTwainAcquireNativeEvent read rOnTwainAcquireNative write rOnTwainAcquireNative;
     property OnTwainAcquireBitmap: TTwainAcquireBitmapEvent read rOnTwainAcquireBitmap write rOnTwainAcquireBitmap;
     property OnAcquireProgress: TAcquireProgressEvent read rOnAcquireProgress write rOnAcquireProgress;
+    property OnProcessMessages: TOnSourceBoolNotify read rOnProcessMessages write rOnProcessMessages;
 
     {Default transfer mode to be used with sources}
     property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
@@ -774,6 +798,11 @@ const
 
   CapabilityModeToTwain: array [TCapabilityOperation] of TW_UINT16 =
     (MSG_GET, MSG_GETCURRENT, MSG_GETDEFAULT, MSG_RESET, MSG_RESETALL, MSG_SET, MSG_SETCONSTRAINT);
+
+  FormatToTwain: Array[TTwainFormat] of TW_UINT16 =
+    (TWFF_TIFF, TWFF_PICT, TWFF_BMP, TWFF_XBM, TWFF_JFIF, TWFF_FPX,
+     TWFF_TIFFMULTI, TWFF_PNG, TWFF_SPIFF, TWFF_EXIF, 0);
+
 
   //Sizes of Papers in cm (fuck inch)
   PaperSizesTwain: array [TTwainPaperSize] of TPaperSize =
@@ -1303,6 +1332,7 @@ end;
 
 procedure TCustomDelphiTwain.RefreshVirtualWindow;
 begin
+  (*  { #note 10 -oMaxM : But why? Try to understand for what obscure reason it is done }
   //BUG WORKAROUND
   DoDestroyVirtualWindow;
   DoDestroy;
@@ -1311,6 +1341,7 @@ begin
 
   if LoadLibrary then
     SourceManagerLoaded := True;
+    *)
 end;
 
 {UnLoads twain source manager}
@@ -1925,6 +1956,8 @@ begin
   {Source must be loaded and the value changing}
   if (Loaded) and (not Enabled) then
   begin
+    if (UserInterface.hParent=0) then UserInterface.hParent := Owner.CustomGetParentWindow;
+
     //npeter may be it is better to send messages to VirtualWindow
     //I am not sure, but it seems more stable with a HP TWAIN driver
     //it was: := GetActiveWindow;
@@ -3610,10 +3643,8 @@ end;
 {Method to transfer the images}
 procedure TTwainSource.TransferImages();
 var
-  {To test if the image transfer is done}
-  Cancel, Done   : Boolean;
   {Return code from Twain method}
-  rc     : TW_UINT16;
+  rc : TW_UINT16;
   {Handle to the native Device independent Image (DIB)}
   hNative: TW_UINT32;
   {Pending transfers structure}
@@ -3624,9 +3655,6 @@ var
   ImageHandle: HBitmap;
   PixelType  : TW_INT16;
 
-  Info_Str: String;
-  Info_Format: TTwainFormat;
-
 begin
   {Set the transfer mode}
   //npeter:
@@ -3635,11 +3663,14 @@ begin
   //commented out
   // ChangeTransferMode(TransferMode);
 
-  Cancel := FALSE; {Testing if it was cancelled}
-  Done := FALSE;  {Initialize done variable}
+  rDownload_Cancelled := False; {Testing if it was cancelled}
+  rDownload_Done := False;  {Initialize done variable}
 
   {Obtain all the images from the source}
+  rDownload_Count:= -1;
   repeat
+    Inc(rDownload_Count);
+
     {Transfer depending on the transfer mode}
     case TransferMode of
       {Native transfer, the source creates the image thru a device}
@@ -3657,16 +3688,27 @@ begin
       begin
         {Event to allow user to set the file transfer information}
         if Assigned(Owner.OnSourceSetupFileXfer) then
-        begin
-         //Info_FileName := Info.FileName;  { #todo 5 -oMaxM : Pass Info to Event so we can change file name }
-         //Info_Format := FormatToTwain[Format];
-          Owner.OnSourceSetupFileXfer(Owner, Index); //, Info);
-        end;
+          Owner.OnSourceSetupFileXfer(Owner, Index);
+
         Owner.TwainProc(AppInfo, @Structure, DG_CONTROL, DAT_SETUPFILEXFER,
           MSG_GET, @Info);
+
+        //MaxM: Apparently i can't set the filename here, so if DownloadCount is greater than zero
+        //      we are forced to rename the file correctly otherwise it will be overwritten
+        if (rDownload_Count = 1)
+        then RenameFile(Info.FileName, rDownload_Path+rDownload_FileName+'-0'+rDownload_Ext);
+
         {Call method to make source acquire and create file}
         rc := Owner.TwainProc(AppInfo, @Structure, DG_IMAGE,
           DAT_IMAGEFILEXFER, MSG_GET, nil);
+
+        if (rDownload_Count > 0)
+        then RenameFile(Info.FileName, rDownload_Path+rDownload_FileName+
+                                    '-'+IntToStr(rDownload_Count)+rDownload_Ext);
+
+        //Set correct Filename for Events
+        Info.FileName:= StrToStr255(rDownload_Path+rDownload_FileName+
+                                    '-'+IntToStr(rDownload_Count)+rDownload_Ext);
       end {case ttmFile};
       {Memory buffer transfers}
       ttmMemory:
@@ -3686,18 +3728,18 @@ begin
       TWRC_XFERDONE:
         case TransferMode of
           {Native transfer sucessfull}
-          ttmNative: ReadNative(hNative, Cancel);
+          ttmNative: ReadNative(hNative, rDownload_Cancelled);
           {File transfer sucessfull}
-          ttmFile: ReadFile(Info.FileName, Info.Format, Cancel);
+          ttmFile: ReadFile(Info.FileName, Info.Format, rDownload_Cancelled);
           {Memory transfer sucessfull}
-          ttmMemory: ReadMemory(ImageHandle, Cancel);
+          ttmMemory: ReadMemory(ImageHandle, rDownload_Cancelled);
         end {case TransferMode, TWRC_XFERDONE};
       {User cancelled the transfers}
       TWRC_CANCEL:
       begin
         {Acknowledge end of transfer}
-        Done := TRUE;
-        Cancel := TRUE;
+        rDownload_Done := True;
+        rDownload_Cancelled := True;
         {Call event, if avaliable}
         if Assigned(Owner.OnAcquireCancel) then
           Owner.OnAcquireCancel(Owner, Index)
@@ -3708,24 +3750,24 @@ begin
     end;
 
     {Check if there are pending transfers}
-    if not Done then
-      Done := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
-        DAT_PENDINGXFERS, MSG_ENDXFER, @PendingXfers) <> TWRC_SUCCESS) or
-        (PendingXfers.Count = 0);
+    if not(rDownload_Done) then
+      rDownload_Done := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
+                        DAT_PENDINGXFERS, MSG_ENDXFER, @PendingXfers) <> TWRC_SUCCESS) or
+                        (PendingXfers.Count = 0);
 
     {If user has cancelled}
-    if not Done and Cancel then
-      Done := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
-        DAT_PENDINGXFERS, MSG_RESET, @PendingXfers) = TWRC_SUCCESS);
+    if not(rDownload_Done) and rDownload_Cancelled then
+      rDownload_Done := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
+                        DAT_PENDINGXFERS, MSG_RESET, @PendingXfers) = TWRC_SUCCESS);
 
-  until Done;
+  until rDownload_Done;
 
   {Disable source}
   Enabled := False;
 
   {All documents have been transfered}
   if Assigned(Owner.OnTransferComplete) then
-    Owner.OnTransferComplete(Owner, Index, Cancel);
+    Owner.OnTransferComplete(Owner, Index, rDownload_Cancelled);
 
   Owner.RefreshVirtualWindow;
 end;
@@ -3812,12 +3854,8 @@ begin
 end;
 
 {Setup file transfer}
-function TTwainSource.SetupFileTransfer(Filename: String;
+function TTwainSource.SetupFileTransfer(APath, AFileName, AExt: String;
   Format: TTwainFormat): Boolean;
-const
-  FormatToTwain: Array[TTwainFormat] of TW_UINT16 = (TWFF_TIFF,
-    TWFF_PICT, TWFF_BMP, TWFF_XBM, TWFF_JFIF, TWFF_FPX, TWFF_TIFFMULTI,
-    TWFF_PNG, TWFF_SPIFF, TWFF_EXIF, 0);
 var
   FileTransferInfo: TW_SETUPFILEXFER;
 begin
@@ -3825,14 +3863,83 @@ begin
   if (Loaded) then
   begin
     {Prepare structure}
-    FileTransferInfo.FileName := StrToStr255({$IFDEF UNICODE}RawByteString{$ENDIF}(FileName));
+    FileTransferInfo.FileName := StrToStr255({$IFDEF UNICODE}RawByteString{$ENDIF}(APath+AFileName+AExt));
     FileTransferInfo.Format := FormatToTwain[Format];
+
+    rDownload_Path:= APath;
+    rDownload_FileName:= AFileName;
+    rDownload_Ext:= AExt;
 
     {Call method}
     Result := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
       DAT_SETUPFILEXFER, MSG_SET, @FileTransferInfo) = TWRC_SUCCESS);
   end
   else Result := FALSE;  {Could not set file transfer with source unloaded}
+end;
+
+function TTwainSource.Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
+                               Format: TTwainFormat): Integer;
+begin
+  if (APath = '') or (APath[Length(APath)]='\')
+  then rDownload_Path:= APath
+  else rDownload_Path:= APath+'\';
+
+  Result:= 0;
+  if not(ForceDirectories(rDownload_Path)) then exit;
+
+  rDownload_FileName:= AFileName;
+  rDownload_Ext:= AExt;
+  rDownload_Count:= -1;
+  rDownload_Done:= False;
+  rDownload_Cancelled:= False;
+  rDownloaded:= False;
+
+  { #note -oMaxM : We absolutely must not set the file name when we are in ttmNative mode otherwise it will be deleted }
+  if (TransferMode = ttmFile)
+  then SetupFileTransfer(rDownload_Path, rDownload_FileName, rDownload_Ext, Format);
+
+  EnableSource(UserInterface);
+
+  //Everything is asynchronous and we have to wait here until it finishes
+  repeat
+    CheckSynchronize(10);
+  until rDownload_Done or
+       (Assigned(Owner.rOnProcessMessages) and not(Owner.rOnProcessMessages(Owner, Index)));
+
+  //If not Cancelled return the number of files really Downloaded
+  if not(rDownload_Cancelled) then Inc(rDownload_Count);
+
+  rDownloaded:= (rDownload_Count > 0);
+
+  if rDownloaded
+  then begin
+         //MaxM: We have changed the first filename adding -0 otherwise it will be overwritten
+         //      See note on TransferImages method
+         if (TransferMode = ttmFile)
+         then RenameFile(rDownload_Path+rDownload_FileName+'-0'+rDownload_Ext,
+                    rDownload_Path+rDownload_FileName+rDownload_Ext);
+         Result:= rDownload_Count;
+       end
+  else Result:= 0;
+end;
+
+function TTwainSource.Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
+                               Format: TTwainFormat; var DownloadedFiles: TStringArray): Integer;
+var
+   i: Integer;
+
+begin
+  Result:= 0;
+
+  Result:= Download(UserInterface, APath, AFileName, AExt, Format);
+  if (Result > 0 ) then
+  begin
+    SetLength(DownloadedFiles, Result);
+    DownloadedFiles[0]:= rDownload_Path+rDownload_FileName+rDownload_Ext;
+    for i:=1 to Result-1 do
+      DownloadedFiles[i]:= rDownload_Path+rDownload_FileName+
+                           '-'+IntToStr(i)+rDownload_Ext;
+  end;
 end;
 
 {Set the number of images that the application wants to receive}
