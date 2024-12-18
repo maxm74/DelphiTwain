@@ -1,0 +1,23 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: delphitwain_settingsform.rsfeeder
+msgid "Feeder"
+msgstr ""
+
+#: delphitwain_settingsform.rsflatbed
+msgid "Flatbed"
+msgstr ""
+
+#: delphitwain_settingsform.rsfullsize
+msgid "Full size"
+msgstr ""
+
+#: delphitwain_settingsform.rslandscape
+msgid "Landscape"
+msgstr ""
+
+#: delphitwain_settingsform.rsportrait
+msgid "Portrait"
+msgstr ""
+

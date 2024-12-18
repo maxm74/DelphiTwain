@@ -18,6 +18,13 @@ uses
   ImgList
   {$ifndef fpc}, ImageList{$endif};
 
+resourcestring
+  rsLandscape = 'Landscape';
+  rsPortrait = 'Portrait';
+  rsFullsize = 'Full size';
+  rsFlatbed = 'Flatbed';
+  rsFeeder = 'Feeder';
+
 type
   { TTwainSettingsSource }
 
@@ -47,6 +54,7 @@ type
     panelButtons: TPanel;
     trBrightness: TTrackBar;
     trContrast: TTrackBar;
+    procedure btOrientationClick(Sender: TObject);
     procedure edBrightnessChange(Sender: TObject);
     procedure edContrastChange(Sender: TObject);
     procedure trBrightnessChange(Sender: TObject);
@@ -84,6 +92,13 @@ begin
   trBrightness.Position:=edBrightness.Value;
 end;
 
+procedure TTwainSettingsSource.btOrientationClick(Sender: TObject);
+begin
+  if btOrientation.Down
+  then begin btOrientation.ImageIndex:= 5; btOrientation.Hint:= rsLandscape; end
+  else begin btOrientation.ImageIndex:= 4; btOrientation.Hint:= rsPortrait; end;
+end;
+
 procedure TTwainSettingsSource.edContrastChange(Sender: TObject);
 begin
   trContrast.Position:=edContrast.Value;
@@ -108,14 +123,14 @@ begin
   with TwainSettingsSource do
   begin
     cbPaperFeeding.Clear;
-    if (pfFlatbed in TwainCap.PaperFeedingSet) then cbPaperFeeding.Items.AddObject('Flatbed', TObject(PtrUInt(pfFlatbed)));
-    if (pfFeeder in TwainCap.PaperFeedingSet) then cbPaperFeeding.Items.AddObject('Feeder', TObject(PtrUInt(pfFeeder)));
+    if (pfFlatbed in TwainCap.PaperFeedingSet) then cbPaperFeeding.Items.AddObject(rsFlatbed, TObject(PtrUInt(pfFlatbed)));
+    if (pfFeeder in TwainCap.PaperFeedingSet) then cbPaperFeeding.Items.AddObject(rsFeeder, TObject(PtrUInt(pfFeeder)));
     cbPaperFeeding.ItemIndex:=cbPaperFeeding.Items.IndexOfObject(TObject(PtrUInt(AParams.PaperFeed)));
 
     //Fill List of Papers
     cbPaperSize.Clear;
     cbSelected :=0;
-    cbPaperSize.Items.AddObject('Full Scanner size', TObject(PtrUInt(tpsNONE)));
+    cbPaperSize.Items.AddObject(rsFullsize, TObject(PtrUInt(tpsNONE)));
     for paperI in TwainCap.PaperSizeSet do
     begin
       if (paperI<>tpsNONE) and (paperI<>tpsMAXSIZE)

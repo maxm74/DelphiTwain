@@ -1,7 +1,8 @@
 object TwainSettingsSource: TTwainSettingsSource
   Left = 451
   Top = 220
-  BorderStyle = bsSizeToolWin
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
   Caption = 'Settings of Twain Source'
   ClientHeight = 321
   ClientWidth = 458
@@ -21,8 +22,6 @@ object TwainSettingsSource: TTwainSettingsSource
     Align = alBottom
     BevelOuter = bvSpace
     TabOrder = 0
-    ExplicitTop = 269
-    ExplicitWidth = 450
     DesignSize = (
       458
       40)
@@ -35,7 +34,6 @@ object TwainSettingsSource: TTwainSettingsSource
       Kind = bkCancel
       NumGlyphs = 2
       TabOrder = 0
-      ExplicitLeft = 270
     end
     object btOk: TBitBtn
       Left = 369
@@ -46,7 +44,6 @@ object TwainSettingsSource: TTwainSettingsSource
       Kind = bkOK
       NumGlyphs = 2
       TabOrder = 1
-      ExplicitLeft = 361
     end
     object btRefresh: TBitBtn
       Left = 8
@@ -197,8 +194,6 @@ object TwainSettingsSource: TTwainSettingsSource
     Align = alClient
     BevelInner = bvRaised
     TabOrder = 1
-    ExplicitWidth = 450
-    ExplicitHeight = 269
     object cbUseNativeUI: TCheckBox
       Left = 8
       Top = 0

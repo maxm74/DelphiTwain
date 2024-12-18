@@ -1,7 +1,8 @@
 object TwainSelectSource: TTwainSelectSource
   Left = 451
   Top = 220
-  BorderStyle = bsSizeToolWin
+  ActiveControl = lvSources
+  BorderIcons = [biSystemMenu]
   Caption = 'Select Twain Source'
   ClientHeight = 321
   ClientWidth = 458
@@ -21,8 +22,6 @@ object TwainSelectSource: TTwainSelectSource
     Align = alBottom
     BevelOuter = bvSpace
     TabOrder = 0
-    ExplicitTop = 269
-    ExplicitWidth = 450
     DesignSize = (
       458
       40)
@@ -35,7 +34,6 @@ object TwainSelectSource: TTwainSelectSource
       Kind = bkCancel
       NumGlyphs = 2
       TabOrder = 0
-      ExplicitLeft = 278
     end
     object btOk: TBitBtn
       Left = 377
@@ -46,7 +44,6 @@ object TwainSelectSource: TTwainSelectSource
       Kind = bkOK
       NumGlyphs = 2
       TabOrder = 1
-      ExplicitLeft = 369
     end
     object btRefresh: TBitBtn
       Left = 8
@@ -198,8 +195,6 @@ object TwainSelectSource: TTwainSelectSource
     Align = alClient
     BevelInner = bvRaised
     TabOrder = 1
-    ExplicitWidth = 450
-    ExplicitHeight = 269
     object lvSources: TListView
       Left = 2
       Top = 2
@@ -208,15 +203,17 @@ object TwainSelectSource: TTwainSelectSource
       Align = alClient
       Columns = <
         item
-          AutoSize = True
           Caption = 'Name'
+          MinWidth = 100
+          Width = 100
         end
         item
-          AutoSize = True
           Caption = 'Manufacturer'
+          MinWidth = 100
+          Width = 100
         end
         item
-          Width = 316
+          Width = 100
         end>
       ColumnClick = False
       HideSelection = False
@@ -224,8 +221,6 @@ object TwainSelectSource: TTwainSelectSource
       RowSelect = True
       TabOrder = 0
       ViewStyle = vsReport
-      ExplicitWidth = 446
-      ExplicitHeight = 265
     end
   end
 end

@@ -3,7 +3,8 @@ object TwainSettingsSource: TTwainSettingsSource
   Height = 321
   Top = 220
   Width = 458
-  BorderStyle = bsSizeToolWin
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
   Caption = 'Settings of Twain Source'
   ClientHeight = 321
   ClientWidth = 458
@@ -212,7 +213,7 @@ object TwainSettingsSource: TTwainSettingsSource
       ClientWidth = 450
       TabOrder = 1
       object cbPaperFeeding: TComboBox
-        Left = 10
+        Left = 12
         Height = 23
         Top = 17
         Width = 192
@@ -221,7 +222,7 @@ object TwainSettingsSource: TTwainSettingsSource
         TabOrder = 0
       end
       object Label1: TLabel
-        Left = 11
+        Left = 12
         Height = 15
         Top = 0
         Width = 79
@@ -235,7 +236,7 @@ object TwainSettingsSource: TTwainSettingsSource
         Caption = 'Paper Size :'
       end
       object cbPaperSize: TComboBox
-        Left = 11
+        Left = 12
         Height = 23
         Top = 66
         Width = 192
@@ -244,14 +245,14 @@ object TwainSettingsSource: TTwainSettingsSource
         TabOrder = 1
       end
       object Label3: TLabel
-        Left = 11
+        Left = 12
         Height = 15
         Top = 200
         Width = 62
         Caption = 'Resolution :'
       end
       object cbResolution: TComboBox
-        Left = 10
+        Left = 12
         Height = 23
         Top = 217
         Width = 192
@@ -331,9 +332,10 @@ object TwainSettingsSource: TTwainSettingsSource
         ShowCaption = False
         ShowHint = True
         ParentShowHint = False
+        OnClick = btOrientationClick
       end
       object Label6: TLabel
-        Left = 13
+        Left = 12
         Height = 15
         Top = 96
         Width = 55
@@ -349,14 +351,14 @@ object TwainSettingsSource: TTwainSettingsSource
         TabOrder = 7
       end
       object Label7: TLabel
-        Left = 14
+        Left = 12
         Height = 15
         Top = 144
         Width = 66
         Caption = 'Image Type :'
       end
       object cbPixelType: TComboBox
-        Left = 13
+        Left = 12
         Height = 23
         Top = 161
         Width = 192

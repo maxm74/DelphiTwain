@@ -3,7 +3,7 @@ object TwainSelectSource: TTwainSelectSource
   Height = 321
   Top = 220
   Width = 458
-  BorderStyle = bsSizeToolWin
+  ActiveControl = lvSources
   Caption = 'Select Twain Source'
   ClientHeight = 321
   ClientWidth = 458
@@ -204,17 +204,17 @@ object TwainSelectSource: TTwainSelectSource
       AutoWidthLastColumn = True
       Columns = <      
         item
-          AutoSize = True
           Caption = 'Name'
-          Width = 47
+          MinWidth = 100
+          Width = 100
         end      
         item
-          AutoSize = True
           Caption = 'Manufacturer'
-          Width = 87
+          MinWidth = 100
+          Width = 100
         end      
         item
-          Width = 316
+          Width = 100
         end>
       ColumnClick = False
       HideSelection = False

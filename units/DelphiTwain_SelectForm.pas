@@ -69,7 +69,9 @@ end;
 
 procedure TTwainSelectSource.FillList(const addList: TArrayTW_IDENTITY);
 var
-   i, selIndex:Integer;
+   i,
+   txtW,
+   selIndex:Integer;
    curItem:TListItem;
    curSource:TTwainSource;
 
@@ -82,9 +84,16 @@ begin
   begin
     curSource :=Twain.Source[i];
     curItem :=lvSources.Items.Add;
+
+    //Add Name Colums and increase width if necessary (since MinWidth/AutoSize don't work as expected)
     curItem.Caption:=curSource.ProductName;
-    //curItem.SubItems.Add(curSource.ProductFamily);
+    txtW:= lvSources.Canvas.TextWidth(curSource.ProductName)+16;
+    if (lvSources.Columns[0].Width < txtW) then lvSources.Columns[0].Width:= txtW;
+
+    //Add Manufacturer
     curItem.SubItems.Add(curSource.Manufacturer);
+    txtW:= lvSources.Canvas.TextWidth(curSource.Manufacturer)+16;
+    if (lvSources.Columns[1].Width < txtW) then lvSources.Columns[1].Width:= txtW;
 
     //if is Current Selected Scanner set selIndex
     if not(rScannerInfo.FromAddList) and not(DeviceInfoDifferent(rScannerInfo, curSource.SourceIdentity^))
@@ -95,10 +104,18 @@ begin
   for i:=Low(addList) to High(addList) do
   begin
     curItem :=lvSources.Items.Add;
+
     curItem.Caption:=addList[i].ProductName;
-    //curItem.SubItems.Add(ipcList[i].ProductFamily);
+    txtW:= lvSources.Canvas.TextWidth(addList[i].ProductName)+16;
+    if (lvSources.Columns[0].Width < txtW) then lvSources.Columns[0].Width:= txtW;
+
     curItem.SubItems.Add(addList[i].Manufacturer);
+    txtW:= lvSources.Canvas.TextWidth(addList[i].Manufacturer)+16;
+    if (lvSources.Columns[1].Width < txtW) then lvSources.Columns[1].Width:= txtW;
+
     curItem.SubItems.Add(MsgAdditionalList);
+    txtW:= lvSources.Canvas.TextWidth(MsgAdditionalList)+16;
+    if (lvSources.Columns[2].Width < txtW) then lvSources.Columns[2].Width:= txtW;
 
     if (rScannerInfo.FromAddList) and not(DeviceInfoDifferent(rScannerInfo, addList[i]))
     then selIndex :=curItem.Index;

@@ -7,6 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
+  DefaultTranslator,
   Forms, DelphiTwainDemo_Form
   { you can add units after this };
 

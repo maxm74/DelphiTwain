@@ -1,0 +1,85 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ttwainselectsource.btrefresh.caption
+msgctxt "ttwainselectsource.btrefresh.caption"
+msgid "Refresh"
+msgstr ""
+
+#: ttwainselectsource.caption
+msgid "Select Twain Source"
+msgstr ""
+
+#: ttwainselectsource.lvsources.columns[0].caption
+msgid "Name"
+msgstr ""
+
+#: ttwainselectsource.lvsources.columns[1].caption
+msgid "Manufacturer"
+msgstr ""
+
+#: delphitwain_settingsform.rsfeeder
+msgid "Feeder"
+msgstr ""
+
+#: delphitwain_settingsform.rsflatbed
+msgid "Flatbed"
+msgstr ""
+
+#: delphitwain_settingsform.rsfullsize
+msgid "Full size"
+msgstr ""
+
+#: delphitwain_settingsform.rslandscape
+msgid "Landscape"
+msgstr ""
+
+#: delphitwain_settingsform.rsportrait
+msgid "Portrait"
+msgstr ""
+
+#: ttwainsettingssource.btorientation.hint
+msgid "Paper Orientation"
+msgstr ""
+
+#: ttwainsettingssource.btrefresh.caption
+msgctxt "ttwainsettingssource.btrefresh.caption"
+msgid "Refresh"
+msgstr ""
+
+#: ttwainsettingssource.caption
+msgid "Settings of Twain Source"
+msgstr ""
+
+#: ttwainsettingssource.cbusenativeui.caption
+msgid "Use Native UI"
+msgstr ""
+
+#: ttwainsettingssource.label1.caption
+msgid "Paper feeding :"
+msgstr ""
+
+#: ttwainsettingssource.label2.caption
+msgid "Paper Size :"
+msgstr ""
+
+#: ttwainsettingssource.label3.caption
+msgid "Resolution :"
+msgstr ""
+
+#: ttwainsettingssource.label4.caption
+msgid "Brightness :"
+msgstr ""
+
+#: ttwainsettingssource.label5.caption
+msgid "Contrast :"
+msgstr ""
+
+#: ttwainsettingssource.label6.caption
+msgid "Bit Depth :"
+msgstr ""
+
+#: ttwainsettingssource.label7.caption
+msgid "Image Type :"
+msgstr ""
+

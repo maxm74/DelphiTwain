@@ -1,0 +1,94 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ttwainselectsource.btrefresh.caption
+msgctxt "ttwainselectsource.btrefresh.caption"
+msgid "Refresh"
+msgstr "Aggiorna"
+
+#: ttwainselectsource.caption
+msgid "Select Twain Source"
+msgstr "Seleziona Sorgente Twain"
+
+#: ttwainselectsource.lvsources.columns[0].caption
+msgid "Name"
+msgstr "Nome"
+
+#: ttwainselectsource.lvsources.columns[1].caption
+msgid "Manufacturer"
+msgstr "Produttore"
+
+#: delphitwain_settingsform.rsfeeder
+msgid "Feeder"
+msgstr "Caricatore"
+
+#: delphitwain_settingsform.rsflatbed
+msgid "Flatbed"
+msgstr "Piano"
+
+#: delphitwain_settingsform.rsfullsize
+msgid "Full size"
+msgstr "Dimensione Intera"
+
+#: delphitwain_settingsform.rslandscape
+msgid "Landscape"
+msgstr "Orizzontale"
+
+#: delphitwain_settingsform.rsportrait
+msgid "Portrait"
+msgstr "Verticale"
+
+#: ttwainsettingssource.btorientation.hint
+msgid "Paper Orientation"
+msgstr "Orientamento Carta"
+
+#: ttwainsettingssource.btrefresh.caption
+msgctxt "ttwainsettingssource.btrefresh.caption"
+msgid "Refresh"
+msgstr "Aggiorna"
+
+#: ttwainsettingssource.caption
+msgid "Settings of Twain Source"
+msgstr "Impostazioni della Sorgente Twain"
+
+#: ttwainsettingssource.cbusenativeui.caption
+msgid "Use Native UI"
+msgstr "Usa UI Nativa"
+
+#: ttwainsettingssource.label1.caption
+msgid "Paper feeding :"
+msgstr "Alimentazione Carta :"
+
+#: ttwainsettingssource.label2.caption
+msgid "Paper Size :"
+msgstr "Dimensione Carta :"
+
+#: ttwainsettingssource.label3.caption
+msgid "Resolution :"
+msgstr "Risoluzione :"
+
+#: ttwainsettingssource.label4.caption
+msgid "Brightness :"
+msgstr "Luminosità :"
+
+#: ttwainsettingssource.label5.caption
+msgid "Contrast :"
+msgstr "Contrasto :"
+
+#: ttwainsettingssource.label6.caption
+msgid "Bit Depth :"
+msgstr "Numero Bit :"
+
+#: ttwainsettingssource.label7.caption
+msgid "Image Type :"
+msgstr "Tipo Immagine :"

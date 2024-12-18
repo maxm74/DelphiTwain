@@ -157,15 +157,7 @@ begin
 
       TwainSource.Loaded:=True;
 
-      TwainCap.PaperFeedingSet:=TwainSource.GetPaperFeeding;
-      capRet :=TwainSource.GetPaperSizeSet(paperCurrent, TwainCap.PaperSizeDefault, TwainCap.PaperSizeSet);
-      capRet :=TwainSource.GetIBitDepth(bitCurrent, TwainCap.BitDepthDefault, TwainCap.BitDepthArray);
-      TwainCap.BitDepthArraySize :=Length(TwainCap.BitDepthArray);
-      capRet :=TwainSource.GetIPixelType(pixelCurrent, TwainCap.PixelTypeDefault, TwainCap.PixelType);
-      capRet :=TwainSource.GetIXResolution(resolutionCurrent, TwainCap.ResolutionDefault, TwainCap.ResolutionArray);
-      TwainCap.ResolutionArraySize :=Length(TwainCap.ResolutionArray);
-
-      btAcquire.Enabled :=True;
+      btAcquire.Enabled:= TwainSource.GetParamsCapabilities(TwainCap);
     end;
 end;
 

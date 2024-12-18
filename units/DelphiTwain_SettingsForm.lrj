@@ -1,0 +1,13 @@
+{"version":1,"strings":[
+{"hash":23222805,"name":"ttwainsettingssource.caption","sourcebytes":[83,101,116,116,105,110,103,115,32,111,102,32,84,119,97,105,110,32,83,111,117,114,99,101],"value":"Settings of Twain Source"},
+{"hash":146640072,"name":"ttwainsettingssource.btrefresh.caption","sourcebytes":[82,101,102,114,101,115,104],"value":"Refresh"},
+{"hash":127607113,"name":"ttwainsettingssource.cbusenativeui.caption","sourcebytes":[85,115,101,32,78,97,116,105,118,101,32,85,73],"value":"Use Native UI"},
+{"hash":225211146,"name":"ttwainsettingssource.label1.caption","sourcebytes":[80,97,112,101,114,32,102,101,101,100,105,110,103,32,58],"value":"Paper feeding :"},
+{"hash":17394554,"name":"ttwainsettingssource.label2.caption","sourcebytes":[80,97,112,101,114,32,83,105,122,101,32,58],"value":"Paper Size :"},
+{"hash":153421322,"name":"ttwainsettingssource.label3.caption","sourcebytes":[82,101,115,111,108,117,116,105,111,110,32,58],"value":"Resolution :"},
+{"hash":265574602,"name":"ttwainsettingssource.label4.caption","sourcebytes":[66,114,105,103,104,116,110,101,115,115,32,58],"value":"Brightness :"},
+{"hash":193724522,"name":"ttwainsettingssource.label5.caption","sourcebytes":[67,111,110,116,114,97,115,116,32,58],"value":"Contrast :"},
+{"hash":25733086,"name":"ttwainsettingssource.btorientation.hint","sourcebytes":[80,97,112,101,114,32,79,114,105,101,110,116,97,116,105,111,110],"value":"Paper Orientation"},
+{"hash":177122426,"name":"ttwainsettingssource.label6.caption","sourcebytes":[66,105,116,32,68,101,112,116,104,32,58],"value":"Bit Depth :"},
+{"hash":12786250,"name":"ttwainsettingssource.label7.caption","sourcebytes":[73,109,97,103,101,32,84,121,112,101,32,58],"value":"Image Type :"}
+]}

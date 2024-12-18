@@ -1,0 +1,6 @@
+{"version":1,"strings":[
+{"hash":167317157,"name":"ttwainselectsource.caption","sourcebytes":[83,101,108,101,99,116,32,84,119,97,105,110,32,83,111,117,114,99,101],"value":"Select Twain Source"},
+{"hash":146640072,"name":"ttwainselectsource.btrefresh.caption","sourcebytes":[82,101,102,114,101,115,104],"value":"Refresh"},
+{"hash":346165,"name":"ttwainselectsource.lvsources.columns[0].caption","sourcebytes":[78,97,109,101],"value":"Name"},
+{"hash":43225858,"name":"ttwainselectsource.lvsources.columns[1].caption","sourcebytes":[77,97,110,117,102,97,99,116,117,114,101,114],"value":"Manufacturer"}
+]}

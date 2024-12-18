@@ -1,6 +1,10 @@
 DELPHITWAIN CHANGE LOG
 ======================
-2024/12/13 MaxM - Added Download method and Download_XXX properties;
+2024/12/18 MaxM - Moved General Types in DelphiTwainTypes Unit;
+	   	  Added GetParamsCapabilities method;
+	   	  Added Languages support;
+	   	  Some UI adjustments due to the length of Italian Language
+        13 MaxM - Added Download method and Download_XXX properties;
 	          Modified TransferImages method to handle multiple files scan (Feeder);
 		  Commented the Obscure RefreshVirtualWindow method that Destroy all; 
 
