@@ -11,7 +11,7 @@ interface
 //{$DEFINE USE_CENTRALIZED_WIN}
 
 uses
-  Windows, SysUtils, Classes, Forms, ExtCtrls, Messages, Graphics,
+  Windows, SysUtils, Classes, Forms, ExtCtrls, Graphics,
   {$IFDEF FPC}interfacebase,{$ENDIF}
   Twain, DelphiTwain;
 

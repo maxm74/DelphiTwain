@@ -1,0 +1,8 @@
+{"version":1,"strings":[
+{"hash":179012015,"name":"tformtwaindemo.caption","sourcebytes":[70,111,114,109,84,119,97,105,110,68,101,109,111],"value":"FormTwainDemo"},
+{"hash":128499909,"name":"tformtwaindemo.btacquire.caption","sourcebytes":[65,99,113,117,105,114,101],"value":"Acquire"},
+{"hash":207909541,"name":"tformtwaindemo.btselect.caption","sourcebytes":[83,101,108,101,99,116,32,83,111,117,114,99,101],"value":"Select Source"},
+{"hash":20414085,"name":"tformtwaindemo.cbnativecapture.caption","sourcebytes":[78,97,116,105,118,101,32,67,97,112,116,117,114,101],"value":"Native Capture"},
+{"hash":5528188,"name":"tformtwaindemo.cbmodalcapture.caption","sourcebytes":[77,111,100,97,108],"value":"Modal"},
+{"hash":94334105,"name":"tformtwaindemo.cbshowui.caption","sourcebytes":[83,104,111,119,85,73],"value":"ShowUI"}
+]}

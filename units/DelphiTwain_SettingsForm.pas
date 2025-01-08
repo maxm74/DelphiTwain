@@ -14,7 +14,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, Buttons,
-  ComCtrls, StdCtrls, Spin, Twain, DelphiTwain, DelphiTwainTypes,
+  ComCtrls, StdCtrls, Spin, DelphiTwain, DelphiTwainTypes,
   ImgList
   {$ifndef fpc}, ImageList{$endif};
 

@@ -8,8 +8,8 @@ unit DelphiTwain_pkg;
 interface
 
 uses
-  Twain, DelphiTwain, DelphiTwain_VCL, DelphiTwainLang, DelphiTwainUtils, DelphiTwainTypes, DelphiTwain_SelectForm, 
-  DelphiTwain_SettingsForm;
+  Twain, DelphiTwain, DelphiTwain_VCL, DelphiTwainUtils, DelphiTwainTypes, 
+  DelphiTwain_SelectForm, DelphiTwain_SettingsForm;
 
 implementation
 

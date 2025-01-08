@@ -6,7 +6,7 @@ object FormTwainDemo: TFormTwainDemo
   Caption = 'FormTwainDemo'
   ClientHeight = 576
   ClientWidth = 769
-  LCLVersion = '3.99.0.0'
+  LCLVersion = '4.99.0.0'
   OnDestroy = FormDestroy
   object ImageHolder: TImage
     Left = 0

@@ -73,7 +73,7 @@ type
 {Returns custom Microsoft Windows® directories}
 function GetCustomDirectory(const DirectoryKind: TDirectoryKind): String;
 {Returns the last error string from Microsoft Windows®}
-function GetLastErrorText(): String;
+function GetLastErrorText: String;
 {Returns if the directory exists}
 function DirectoryExists(const Directory: String): Boolean;
 {Returns if the file exists}
@@ -84,10 +84,10 @@ function ExtractDirectory(const FilePath: String): String;
 {Convert from twain Fix32 to Single}
 function Fix32ToFloat(Value: TW_FIX32): Single;
 {Convert from Single to Fix32}
-function FloatToFix32 (floater: Single): TW_FIX32;
+function FloatToFix32(floater: Single): TW_FIX32;
 
 {Returns the number of colors in the DIB}
-function DibNumColors (pv: Pointer): Word;
+function DibNumColors(pv: Pointer): Word;
 
 //Write a Windows Bitmap Native Handle to File
 function WriteBitmapToFile(FileName:String; hDIB: TW_UINT32): Boolean; overload;
@@ -191,7 +191,7 @@ begin
 end;
 
 {Returns the last error string from Microsoft Windows®}
-function GetLastErrorText(): String;
+function GetLastErrorText: String;
 var
   Buffer: Array[Byte] of WideChar;
   Len   : DWORD;
@@ -199,7 +199,7 @@ begin
   {Calls format message to translate from the error code ID to}
   {a text understandable error}
   Len := Windows.FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM or
-    FORMAT_MESSAGE_ARGUMENT_ARRAY, nil, GetLastError(),
+    FORMAT_MESSAGE_ARGUMENT_ARRAY, nil, GetLastError,
     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), Buffer, sizeof(Buffer), nil);
   {Remove this chars from the ending of the result}
   {$WARNINGS OFF}

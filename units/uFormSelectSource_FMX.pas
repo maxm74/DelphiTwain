@@ -32,9 +32,12 @@ type
       Dummy: {$IFDEF DELPHI_XE5_UP}NativeInt{$ELSE}Integer{$ENDIF} = 0); override;
   end;
 
-implementation
+var
+  DELPHITWAIN_SelectSource: String = 'Select source';
+  DELPHITWAIN_OK: String = '&OK';
+  DELPHITWAIN_Cancel: String = '&Cancel';
 
-uses DelphiTwainLang;
+implementation
 
 constructor TFormSelectSource.CreateNew(AOwner: TComponent;
   Dummy: {$IFDEF DELPHI_XE5_UP}NativeInt{$ELSE}Integer{$ENDIF} = 0);

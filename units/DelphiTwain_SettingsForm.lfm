@@ -9,7 +9,7 @@ object TwainSettingsSource: TTwainSettingsSource
   ClientHeight = 321
   ClientWidth = 458
   Position = poScreenCenter
-  LCLVersion = '3.99.0.0'
+  LCLVersion = '4.99.0.0'
   object panelButtons: TPanel
     Left = 0
     Height = 40

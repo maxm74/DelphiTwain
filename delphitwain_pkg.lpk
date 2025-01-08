@@ -26,10 +26,6 @@
         <UnitName Value="DelphiTwain_VCL"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwainLang.pas"/>
-        <UnitName Value="DelphiTwainLang"/>
-      </Item>
-      <Item>
         <Filename Value="units\DelphiTwainUtils.pas"/>
         <UnitName Value="DelphiTwainUtils"/>
       </Item>

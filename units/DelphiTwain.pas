@@ -80,11 +80,11 @@ type
     procedure SetMinorVersion(const aMinorVersion: TW_UINT16);
 
     {Returns application language property}
-    function GetLanguage(): TTwainLanguage;
+    function GetLanguage: TTwainLanguage;
     {Returns text values}
     function GetString(const Index: integer): String;
     {Returns avaliable groups}
-    function GetGroups(): TTwainGroups;
+    function GetGroups: TTwainGroups;
 
   public
     {Object being created}
@@ -134,9 +134,9 @@ type
 
     {Used with property SourceManagerLoaded to test if the source manager}
     {is loaded or not.}
-    function GetSourceManagerLoaded(): Boolean;
+    function GetSourceManagerLoaded: Boolean;
     {Returns a pointer to the application}
-    function GetAppInfo(): pTW_IDENTITY;
+    function GetAppInfo: pTW_IDENTITY;
     {Sets if the source is loaded}
     procedure SetLoaded(const Value: Boolean);
     {Sets if the source is enabled}
@@ -172,7 +172,7 @@ type
     {Returns a pointer to the TW_IDENTITY for the application}
     property AppInfo: pTW_IDENTITY read GetAppInfo;
     {Method to transfer the images}
-    procedure TransferImages();
+    procedure TransferImages;
     {Returns if the source manager is loaded}
     property SourceManagerLoaded: Boolean read GetSourceManagerLoaded;
     {Source configuration methods}
@@ -187,7 +187,7 @@ type
       Data: HGLOBAL): TCapabilityRet;
 
     {Used with property PendingXfers}
-    function GetPendingXfers(): TW_INT16;
+    function GetPendingXfers: TW_INT16;
 
   public
     {Message received in the event loop}
@@ -287,7 +287,7 @@ type
     property TransferMode: TTwainTransferMode read fTransferMode write fTransferMode;
 
     {Returns return status information}
-    function GetReturnStatus(): TW_UINT16;
+    function GetReturnStatus: TW_UINT16;
 
     {Capability setting}
     {Set the number of images that the application wants to receive}
@@ -413,9 +413,9 @@ type
     {Disables the source}
     function DisableSource: Boolean;
     {Loads the source}
-    function LoadSource(): Boolean;
+    function LoadSource: Boolean;
     {Unloads the source}
-    function UnloadSource(): Boolean;
+    function UnloadSource: Boolean;
 
     {Returns number of pending transfer}
     property PendingXfers: TW_INT16 read GetPendingXfers;
@@ -564,7 +564,7 @@ type
 
   public
     {Clears the list of sources}
-    procedure ClearDeviceList();
+    procedure ClearDeviceList;
 
     {Allows Twain to display a dialog to let the user choose any source}
     {and returns the source index in the list}
@@ -572,17 +572,17 @@ type
     {Returns the number of loaded sources}
     property SourcesLoaded: Integer read fSourcesLoaded;
     {Enumerate the avaliable devices after Source Manager is loaded}
-    function EnumerateDevices(): Boolean;
+    function EnumerateDevices: Boolean;
     {Object being created}
     constructor Create; virtual;
     {Object being destroyed}
     destructor Destroy; override;
     {Loads twain library and returns if it loaded sucessfully}
-    function LoadLibrary(): Boolean;
+    function LoadLibrary: Boolean;
     {Unloads twain and returns if it unloaded sucessfully}
-    function UnloadLibrary(): Boolean;
+    function UnloadLibrary: Boolean;
     {Loads twain source manager}
-    function LoadSourceManager(): Boolean;
+    function LoadSourceManager: Boolean;
     {Unloads the source manager}
     function UnloadSourceManager(forced: boolean): Boolean;
     {Returns the application TW_IDENTITY}
@@ -707,7 +707,7 @@ function StrToStr255(Value: String): TW_STR255;
 function GetTwainDirectory(ALib: String = TWAINLIBRARY): String;
 
 {This method returns if Twain is installed in the current machine}
-function IsTwainInstalled(): Boolean;
+function IsTwainInstalled: Boolean;
 
 {Returns the size of a twain type}
 function TWTypeSize(TypeName: TW_UINT16): Integer;
@@ -791,11 +791,11 @@ begin
 end;
 
 {This method returns if Twain is installed in the current machine}
-function IsTwainInstalled(): Boolean;
+function IsTwainInstalled: Boolean;
 begin
   {If GetTwainDirectory function returns an empty string, it means}
   {that Twain was not found}
-  Result := (GetTwainDirectory() <> '');
+  Result := (GetTwainDirectory <> '');
 end;
 
 function PaperSizeToTwain(AValue: TTwainPaperSize): TW_UINT16;
@@ -885,8 +885,7 @@ begin
 end;
 
 {Sets a text value}
-procedure TTwainIdentity.SetString(const Index: Integer;
-  const Value: String);
+procedure TTwainIdentity.SetString(const Index: Integer; const Value: String);
 var
   PropStr: PAnsiChar;
 begin
@@ -919,7 +918,7 @@ begin
 end;
 
 {Returns application language property}
-function TTwainIdentity.GetLanguage(): TTwainLanguage;
+function TTwainIdentity.GetLanguage: TTwainLanguage;
 begin
   if Structure.Version.Language = High(TW_UINT16) then
     Result := tlUserLocale
@@ -977,7 +976,7 @@ begin
   Result := Structure.Version.Country;
 end;
 
-function TTwainIdentity.GetGroups(): TTwainGroups;
+function TTwainIdentity.GetGroups: TTwainGroups;
 begin
   {Convert from Structure.SupportedGroups to TTwainGroups}
  Result := [];
@@ -1019,7 +1018,7 @@ end;
 { TCustomDelphiTwain component implementation }
 
 {Loads twain library and returns if it loaded sucessfully}
-function TCustomDelphiTwain.LoadLibrary(): Boolean;
+function TCustomDelphiTwain.LoadLibrary: Boolean;
 var
   TwainDirectory: String;
 begin
@@ -1028,7 +1027,7 @@ begin
   begin
     Result := FALSE; {Initially returns FALSE}
     {Searches for Twain directory}
-    TwainDirectory := GetTwainDirectory();
+    TwainDirectory := GetTwainDirectory;
     {Continue only if twain is installed in an known directory}
     if TwainDirectory <> '' then
     begin
@@ -1069,7 +1068,7 @@ end;
 
 
 {Unloads twain and returns if it unloaded sucessfully}
-function TCustomDelphiTwain.UnloadLibrary(): Boolean;
+function TCustomDelphiTwain.UnloadLibrary: Boolean;
 begin
   {The library must not be already unloaded}
   if (LibraryLoaded) then
@@ -1094,7 +1093,7 @@ begin
 end;
 
 {Enumerate the avaliable devices after Source Manager is loaded}
-function TCustomDelphiTwain.EnumerateDevices(): Boolean;
+function TCustomDelphiTwain.EnumerateDevices: Boolean;
 var
   NewSource: TTwainSource;
   CallRes  : TW_UINT16;
@@ -1103,7 +1102,7 @@ begin
   if (LibraryLoaded and SourceManagerLoaded) then
   begin
     {Clears the preview list of sources}
-    ClearDeviceList();
+    ClearDeviceList;
 
     {Allocate new identity and tries to enumerate}
     NewSource := TTwainSource.Create(Self);
@@ -1150,7 +1149,7 @@ begin
        if (Self.SourcesLoaded > 0) then
         begin
           {Convert parameters to a TMsg}
-          xMsg := MakeMsg(Handle, Msg, wParam, lParam);//MakeMsg(Handle, Msg, wParam, lParam);
+          xMsg := MakeMsg(Handle, Msg, wParam, lParam);
           {Tell about this message}
           FOR i := 0 TO Self.SourceCount - 1 DO
             if ((Self.Source[i].Loaded) and (Self.Source[i].Enabled)) then
@@ -1175,14 +1174,14 @@ begin
   begin
     {Depending on the parameter load/unload the library and updates}
     {property whenever it loaded or unloaded sucessfully}
-    if Value           then  LoadLibrary()
-    else {if not Value then} UnloadLibrary();
+    if Value           then  LoadLibrary
+    else {if not Value then} UnloadLibrary;
 
   end {if (Value <> fLibraryLoaded)}
 end;
 
 {Loads twain source manager}
-function TCustomDelphiTwain.LoadSourceManager(): Boolean;
+function TCustomDelphiTwain.LoadSourceManager: Boolean;
 begin
   {The library must be loaded}
   if LibraryLoaded and not SourceManagerLoaded then begin
@@ -1220,7 +1219,7 @@ begin
   if LibraryLoaded and SourceManagerLoaded then
   begin
     {Clears the list of sources}
-    ClearDeviceList();
+    ClearDeviceList;
     {Unload source manager}
     if not forced then
      Result := (TwainProc(AppInfo, nil, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, @VirtualWindow) = TWRC_SUCCESS)
@@ -1260,8 +1259,8 @@ begin
   {Free the object}
   fInfo.Free;
   {Clears and free source list}
-  ClearDeviceList();
-  DeviceList.Free();
+  ClearDeviceList;
+  DeviceList.Free;
 end;
 
 {Virtual window procedure handler}
@@ -1344,7 +1343,7 @@ begin
   end;
 
   fVirtualWindow :=CreateWindowExW(0, @VirtualWinClassName, @VirtualWinClassName,
-    WS_POPUP, 0, 0, 0, 0, 0, 0, (*HWND(nil), HMENU(nil),*) HInstance, Self);
+    WS_POPUP, 0, 0, 0, 0, 0, 0, HInstance, Self);
 end;
 
 procedure TCustomDelphiTwain.DoDestroyVirtualWindow;
@@ -1372,8 +1371,7 @@ end;
 procedure TCustomDelphiTwain.DoMessagesTimer(Sender: TObject);
 begin
   //MUST BE HERE SO THAT TWAIN RECEIVES MESSAGES
-  if (VirtualWindow > 0)
-  then SendMessage(VirtualWindow, WM_USER, 0, 0);
+  if (VirtualWindow > 0) then SendMessage(VirtualWindow, WM_USER, 0, 0);
 end;
 
 procedure TCustomDelphiTwain.MessageTimer_Enable;
@@ -1445,13 +1443,13 @@ begin
   if LibraryLoaded and (Value <> fSourceManagerLoaded) then
   begin
     {Load/unload the source manager}
-    if Value           then  LoadSourceManager()
+    if Value           then  LoadSourceManager
     else {if not Value then} UnloadSourceManager(false);
   end {if LibraryLoaded}
 end;
 
 {Clears the list of sources}
-procedure TCustomDelphiTwain.ClearDeviceList();
+procedure TCustomDelphiTwain.ClearDeviceList;
 var
   i: Integer;
 begin
@@ -1468,7 +1466,7 @@ end;
 {Finds a matching source index}
 function TCustomDelphiTwain.FindSource(Value: pTW_IDENTITY): Integer;
 var
-  i       : Integer;
+  i: Integer;
 
 begin
   Result := -1;
@@ -1487,8 +1485,7 @@ end;
 
 function TCustomDelphiTwain.FindSource(AID: TW_UINT32): Integer;
 var
-  i      :Integer;
-  curStr :TTwainSource;
+  i: Integer;
 
 begin
  Result := -1;
@@ -1507,8 +1504,8 @@ end;
 
 function TCustomDelphiTwain.FindSource(AManufacturer, AProductFamily, AProductName: String): Integer;
 var
-  i      :Integer;
-  curStr :TTwainSource;
+  i: Integer;
+  curStr: TTwainSource;
 
 begin
   Result := -1;
@@ -1525,7 +1522,7 @@ end;
 
 function TCustomDelphiTwain.FindSource(AProductName: String): Integer;
 var
-  i      :Integer;
+  i: Integer;
 
 begin
   Result := -1;
@@ -1540,7 +1537,7 @@ end;
 
 function TCustomDelphiTwain.FindSourceID(Value: pTW_IDENTITY): TW_UINT32;
 var
-  i       : Integer;
+  i: Integer;
 
 begin
  Result := 0;
@@ -1555,8 +1552,7 @@ end;
 
 function TCustomDelphiTwain.FindSourceID(AID: TW_UINT32): Boolean;
 var
-  i      :Integer;
-  curStr :TTwainSource;
+  i: Integer;
 
 begin
   Result:= False;
@@ -1575,8 +1571,8 @@ end;
 
 function TCustomDelphiTwain.FindSourceID(AManufacturer, AProductFamily, AProductName: String): TW_UINT32;
 var
-  i      :Integer;
-  curStr :TTwainSource;
+  i: Integer;
+  curStr: TTwainSource;
 
 begin
   Result :=0;
@@ -1593,8 +1589,8 @@ end;
 
 function TCustomDelphiTwain.FindSourceID(AProductName: String): TW_UINT32;
 var
-  i      :Integer;
-  curStr :TTwainSource;
+  i: Integer;
+  curStr: TTwainSource;
 
 begin
   Result :=0;
@@ -1669,7 +1665,7 @@ begin
   if (LibraryLoaded and SourceManagerLoaded) then
   begin
     {Enumerate devices, if needed}
-    if not HasEnumerated then EnumerateDevices();
+    if not HasEnumerated then EnumerateDevices;
     {Returns}
     Result := DeviceList.Count;
   end
@@ -1786,8 +1782,8 @@ begin
   if (Value <> fLoaded) then
   begin
     {Loads or unloads the source}
-    if Value           then  LoadSource()
-    else {if not Value then} UnloadSource();
+    if Value           then  LoadSource
+    else {if not Value then} UnloadSource;
   end {if (Value <> fLoaded)}
 end;
 
@@ -1799,7 +1795,7 @@ begin
   begin
     {Enables/disables}
     if Value           then  EnableSource(ShowUI, Modal)
-    else {if not Value then} DisableSource();
+    else {if not Value then} DisableSource;
   end {if (Loaded) and (Value <> fEnabled)}
 end;
 
@@ -1846,14 +1842,13 @@ begin
 end;
 
 {Disables the source}
-function TTwainSource.DisableSource(): Boolean;
+function TTwainSource.DisableSource: Boolean;
 var
   twUserInterface: TW_USERINTERFACE;
 begin
   {Source must be loaded and the value changing}
-  if (Loaded) and (Enabled) then
+  if Loaded and Enabled then
   begin
-
     {Call method}
     Result := (Owner.TwainProc(AppInfo, @Structure, DG_CONTROL,
       DAT_USERINTERFACE, MSG_DISABLEDS, @twUserInterface) = TWRC_SUCCESS);
@@ -1900,7 +1895,7 @@ begin
   if Loaded then
   begin
     {If the source was enabled, disable it}
-    DisableSource();
+    DisableSource;
     {Call method to load}
     Result := (Owner.TwainProc(AppInfo, nil, DG_CONTROL, DAT_IDENTITY,
       MSG_CLOSEDS, @Structure) = TWRC_SUCCESS);
@@ -1919,7 +1914,7 @@ end;
 destructor TTwainSource.Destroy;
 begin
   {If loaded, unloads source}
-  UnloadSource();
+  UnloadSource;
   {Let ancestor class process}
   inherited Destroy;
 end;
@@ -1993,13 +1988,13 @@ begin
         if Assigned(Owner.OnTransferComplete) then
           Owner.OnTransferComplete(Owner, Index, True);
         {Disable the source}
-        DisableSource();
+        DisableSource;
         Owner.RefreshVirtualWindow;
       end;
       {Ready to transfer the images}
       MSG_XFERREADY:
         {Call method to transfer}
-        TransferImages();
+        TransferImages;
 
       MSG_CLOSEDSOK:
        result:=true;
@@ -2036,7 +2031,7 @@ begin
     TWRC_SUCCESS: Result := crSuccess;
     {Error, get more on the error, and return result}
     {case} else
-      case GetReturnStatus() of
+      case GetReturnStatus of
          TWCC_CAPUNSUPPORTED: Result := crUnsupported;
          TWCC_CAPBADOPERATION: Result := crBadOperation;
          TWCC_CAPSEQERROR: Result := crDependencyError;
@@ -2057,7 +2052,6 @@ begin
   {Source must be loaded to set}
   if Loaded then
   begin
-
     {Fill structure}
     CapabilityInfo.Cap := Capability;
     CapabilityInfo.ConType := ConType;
@@ -2133,7 +2127,6 @@ begin
   {Source must be loaded}
   if Loaded then
   begin
-
     {Fill structure}
     CapabilityInfo.Cap := Capability;
     CapabilityInfo.ConType := TWON_DONTCARE16;
@@ -2385,7 +2378,6 @@ begin
       inc(Data, ItemSize);
     end;
 
-
     {Unlock memory and unallocate}
     GlobalUnlock(MemHandle);
     GlobalFree(MemHandle);
@@ -2603,7 +2595,6 @@ begin
       {Move memory to the next}
       inc(Data, ItemSize);
     end;
-
 
     {Unlock memory and unallocate}
     GlobalUnlock(MemHandle);
@@ -2850,9 +2841,7 @@ begin
            OneV := GlobalLock(MemHandle);
 
            if (OneV^.ItemType = TWTY_FIX32)
-           then (* with pTW_FIX32(@OneV^.Item)^ do
-                Value :=StrToFloat(IntToStr(Whole) + FormatSettings.DecimalSeparator + IntToStr(Frac))*)
-                Value := Fix32ToFloat(pTW_FIX32(@OneV^.Item)^)
+           then Value := Fix32ToFloat(pTW_FIX32(@OneV^.Item)^)
            else Result := crInvalidContainer;
 
            GlobalUnlock(MemHandle);
@@ -3510,7 +3499,7 @@ begin
 end;
 
 {Method to transfer the images}
-procedure TTwainSource.TransferImages();
+procedure TTwainSource.TransferImages;
 var
   {Return code from Twain method}
   rc : TW_UINT16;
@@ -3615,7 +3604,7 @@ begin
       end
       else {Unknown return or error}
         if Assigned(Owner.OnAcquireError) then
-          Owner.OnAcquireError(Owner, Index, Rc, GetReturnStatus())
+          Owner.OnAcquireError(Owner, Index, Rc, GetReturnStatus)
     end;
 
     {Check if there are pending transfers}
@@ -3680,7 +3669,7 @@ procedure TTwainSource.ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
 var
   DibInfo: PBITMAPINFO;
   ColorTableSize: Integer;
-  lpBits: PAnsiChar;//ccc
+  lpBits: PAnsiChar;
   DC: HDC;
   BitmapHandle: HBitmap;
   NeedBitmap:Boolean;
@@ -3695,15 +3684,15 @@ begin
     ColorTableSize := (DibNumColors(DibInfo) * SizeOf(RGBQUAD));
 
     {Get data memory position}
-    lpBits := PAnsiChar(DibInfo);//ccc
+    lpBits := PAnsiChar(DibInfo);
     //{$IFDEF FPC}
     Inc(lpBits, DibInfo.bmiHeader.biSize);
-    //{$ELSE}ccc
+    //{$ELSE}
     //DELPHI BUG - due to wrong PChar definition
     //Inc(lpBits, DibInfo.bmiHeader.biSize div 2);
     //{$ENDIF}
     Inc(lpBits, ColorTableSize);
-    //lpBits := PAnsiChar(DibInfo^.bmiColors);//ccc
+    //lpBits := PAnsiChar(DibInfo^.bmiColors);
 
     {Creates the bitmap}
     DC := GetDC(Owner.VirtualWindow);
@@ -3716,7 +3705,7 @@ begin
     Owner.DoTwainAcquire(Owner, Index, BitmapHandle, Cancel);
 
     {Free bitmap}
-    //DeleteObject(BitmapHandle); //MaxM: we can not Free the Bitmap Handke
+    //DeleteObject(BitmapHandle); //MaxM: we can not Free the Bitmap Handle
     GlobalUnlock(nativeHandle);
     GlobalFree(nativeHandle);
   end;
@@ -3968,31 +3957,6 @@ end;
 
 {Returns pixel type values}
 function TTwainSource.GetIPixelType(var Current, Default: TTwainPixelType; var Values: TTwainPixelTypeSet): TCapabilityRet;
-//var
-//  ItemType: TW_UINT16;
-//  List    : TStringArray;
-//  Current, i,
-//  Default : Integer;
-//begin
-  (*oldcode
-  {Call method to get result}
-  Result := GetEnumerationValue(ICAP_PIXELTYPE, {%H-}ItemType, {%H-}List, {%H-}Current,
-    {%H-}Default, Mode);
-  if ItemType <> TWTY_UINT16 then Result := crUnsupported;
-
-  {If it was sucessfull, return values}
-  if Result = crSuccess then
-  begin
-    {Make list}
-    for i := Low(List) to High(List) do
-      Include(Supported, TwainToTTwainPixelType(StrToIntDef(List[i], -1)));
-    {Return values depending on the mode}
-    if Mode = rcGetDefault then
-      Return := TwainToTTwainPixelType(StrToIntDef(List[Default], -1))
-    else
-      Return := TwainToTTwainPixelType(StrToIntDef(List[Current], -1));
-  end {if Result = crSuccess}
-  *)
 var
   EnumV: pTW_ENUMERATION;
   Item: pTW_UINT16;
@@ -4062,30 +4026,8 @@ end;
 
 {Returns bitdepth values}
 function TTwainSource.GetIBitDepth(var Current, Default: Integer; var Values: TArrayInteger): TCapabilityRet;
-//var
- // ItemType: TW_UINT16;
- // List    : TStringArray;
- // Current, i,
- // Default : Integer;
 begin
-(*oldcode
-  {Call GetOneValue to obtain this property}
-  Result := GetEnumerationValue(ICAP_BITDEPTH, {%H-}ItemType, {%H-}List, {%H-}Current,
-    {%H-}Default, Mode);
-  if ItemType <> TWTY_UINT16 then Result := crUnsupported;
-
-  {In case everything went ok, fill parameters}
-  if Result = crSuccess then
-  begin
-    {Build bit depth list}
-    SetLength(Supported, Length(List));
-    FOR i := LOW(List) TO HIGH(List) DO
-      Supported[i] := StrToIntDef(List[i], -1);
-    {Return values depending on the mode}
-    if Mode = rcGetDefault then Return := StrToIntDef(List[Default], -1)
-    else Return := StrToIntDef(List[Current], -1);
-  end {if Result = crSuccess}
-*) Result := GetEnumerationValue(ICAP_BITDEPTH, Values, Current, Default, rcGet);
+ Result := GetEnumerationValue(ICAP_BITDEPTH, Values, Current, Default, rcGet);
 end;
 
 {Set current bitdepth value}
@@ -4095,52 +4037,14 @@ begin
 end;
 
 {Returns physical width}
-function TTwainSource.GetIPhysicalWidth(var Return: Single;
-  Mode: TRetrieveCap): TCapabilityRet;
-var
-  Handle: HGlobal;
-  OneV  : pTW_ONEVALUE;
-  Container: TW_UINT16;
+function TTwainSource.GetIPhysicalWidth(var Return: Single; Mode: TRetrieveCap): TCapabilityRet;
 begin
-(*oldcode
-  {Obtain handle to data from this capability}
-  Result := GetCapabilityRec(ICAP_PHYSICALWIDTH, {%H-}Handle, {%H-}Mode, {%H-}Container);
-  if Result = crSuccess then
-  begin
-    {Obtain data}
-    OneV := GlobalLock(Handle);
-    if OneV^.ItemType <> TWTY_FIX32 then Result := crUnsupported
-    else Return := Fix32ToFloat(pTW_FIX32(@OneV^.Item)^);
-    {Free data}
-    GlobalUnlock(Handle);
-    GlobalFree(Handle);
-  end;
-  *)
   Result :=GetOneValue(ICAP_PHYSICALWIDTH, Return, Mode);
 end;
 
 {Returns physical height}
-function TTwainSource.GetIPhysicalHeight(var Return: Single;
-  Mode: TRetrieveCap): TCapabilityRet;
-var
-  Handle: HGlobal;
-  OneV  : pTW_ONEVALUE;
-  Container: TW_UINT16;
+function TTwainSource.GetIPhysicalHeight(var Return: Single; Mode: TRetrieveCap): TCapabilityRet;
 begin
-(*oldcode
-  {Obtain handle to data from this capability}
-  Result := GetCapabilityRec(ICAP_PHYSICALHEIGHT, {%H-}Handle, {%H-}Mode, {%H-}Container);
-  if Result = crSuccess then
-  begin
-    {Obtain data}
-    OneV := GlobalLock(Handle);
-    if OneV^.ItemType <> TWTY_FIX32 then Result := crUnsupported
-    else Return := Fix32ToFloat(pTW_FIX32(@OneV^.Item)^);
-    {Free data}
-    GlobalUnlock(Handle);
-    GlobalFree(Handle);
-  end;
-  *)
   Result :=GetOneValue(ICAP_PHYSICALHEIGHT, Return, Mode);
 end;
 
@@ -4258,49 +4162,19 @@ end;
 
 {Returns if user interface is controllable}
 function TTwainSource.GetUIControllable(var Return: Boolean): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  Value   : String;
 begin
-  (*oldcode
-  {Try to obtain value and make sure it is of type TW_BOOL}
-  Result := GetOneValue(CAP_UICONTROLLABLE, {%H-}ItemType, {%H-}Value, rcGet);
-  if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
-    Result := crUnsupported;
-  {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1');
-  *)
   Result :=GetOneValue(CAP_UICONTROLLABLE, Return, rcGet);
 end;
 
 {Returns if feeder is loaded}
 function TTwainSource.GetFeederLoaded(var Return: Boolean): TCapabilityRet;
-var
-  ItemType: TW_UINT16;
-  Value   : String;
 begin
-  (*oldcode
-  {Try to obtain value and make sure it is of type TW_BOOL}
-  Result := GetOneValue(CAP_FEEDERLOADED, {%H-}ItemType, {%H-}Value, rcGet);
-  if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
-    Result := crUnsupported;
-  {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1');
-  *) Result :=GetOneValue(CAP_FEEDERLOADED, Return, rcGet);
+  Result :=GetOneValue(CAP_FEEDERLOADED, Return, rcGet);
 end;
 
 {Returns if feeder is enabled}
 function TTwainSource.GetFeederEnabled(var Return: Boolean): TCapabilityRet;
-//var
-//  ItemType: TW_UINT16;
-//  Value   : String;
 begin
- (*oldcode {Try to obtain value and make sure it is of type TW_BOOL}
-  Result := GetOneValue(CAP_FEEDERENABLED, {%H-}ItemType, {%H-}Value, rcGet);
-  if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
-    Result := crUnsupported;
-  {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1'); *)
   Result := GetOneValue(CAP_FEEDERENABLED, Return, rcGet);
 end;
 
@@ -4309,27 +4183,20 @@ function TTwainSource.SetFeederEnabled(Value: Boolean): TCapabilityRet;
 begin
   Result := SetOneValue(CAP_FEEDERENABLED, Value);
 
-  //MaxM: to really use feeder we must also set autofeed or autoscan, but only
-  // for one of them since setting autoscan also sets autofeed
-  if CapabilityCanSet(CAP_AUTOSCAN)
-  then Result := SetOneValue(CAP_AUTOSCAN, Value)
-  else if CapabilityCanSet(CAP_AUTOFEED)
-       then Result := SetOneValue(CAP_AUTOFEED, Value);
+  if Value then
+  begin
+    //MaxM: to really use feeder we must also set autofeed or autoscan, but only
+    // for one of them since setting autoscan also sets autofeed
+    if CapabilityCanSet(CAP_AUTOSCAN)
+    then Result := SetOneValue(CAP_AUTOSCAN, Value)
+    else if CapabilityCanSet(CAP_AUTOFEED)
+         then Result := SetOneValue(CAP_AUTOFEED, Value);
+  end;
 end;
 
 {Returns if autofeed is enabled}
 function TTwainSource.GetAutoFeed(var Return: Boolean): TCapabilityRet;
-//var
-//  ItemType: TW_UINT16;
-//  Value   : String;
 begin
-  (*oldcode
-  {Try to obtain value and make sure it is of type TW_BOOL}
-  Result := GetOneValue(CAP_AUTOFEED, {%H-}ItemType, {%H-}Value, rcGet);
-  if (Result = crSuccess) and (ItemType <> TWTY_BOOL) then
-    Result := crUnsupported;
-  {Return value, by checked the return value from GetOneValue}
-  if Result = crSuccess then Return := (Value = '1'); *)
   Result :=GetOneValue(CAP_AUTOFEED, Return, rcGet);
 end;
 

@@ -142,7 +142,6 @@
         <DCCReference Include="units\Twain.pas"/>
         <DCCReference Include="units\DelphiTwain.pas"/>
         <DCCReference Include="units\DelphiTwain_VCL.pas"/>
-        <DCCReference Include="units\DelphiTwainLang.pas"/>
         <DCCReference Include="units\DelphiTwainUtils.pas"/>
         <DCCReference Include="units\DelphiTwain_SelectForm.pas">
             <Form>TwainSelectSource</Form>
@@ -195,6 +194,12 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\22.0\Bpl\delphitwain_dpkg.bpl" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>delphitwain_dpkg.bpl</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="C:\Users\Public\Documents\Embarcadero\Studio\23.0\Bpl\delphitwain_dpkg.bpl" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>delphitwain_dpkg.bpl</RemoteName>
                         <Overwrite>true</Overwrite>

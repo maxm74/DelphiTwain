@@ -37,7 +37,6 @@ contains
   Twain in 'units\Twain.pas',
   DelphiTwain in 'units\DelphiTwain.pas',
   DelphiTwain_VCL in 'units\DelphiTwain_VCL.pas',
-  DelphiTwainLang in 'units\DelphiTwainLang.pas',
   DelphiTwainUtils in 'units\DelphiTwainUtils.pas',
   DelphiTwain_SelectForm in 'units\DelphiTwain_SelectForm.pas' {TwainSelectSource},
   DelphiTwain_SettingsForm in 'units\DelphiTwain_SettingsForm.pas' {TwainSettingsSource},

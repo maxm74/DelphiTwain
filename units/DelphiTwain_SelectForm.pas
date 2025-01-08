@@ -14,7 +14,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, Buttons,
-  ComCtrls, Twain, DelphiTwain, DelphiTwainTypes, StdCtrls;
+  ComCtrls, Twain, DelphiTwain, DelphiTwainTypes;
 
 type
 

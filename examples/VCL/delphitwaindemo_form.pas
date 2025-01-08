@@ -9,7 +9,7 @@ unit DelphiTwainDemo_Form;
 interface
 
 uses
-  Windows, Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
   ExtCtrls, Twain, DelphiTwain, DelphiTwainUtils, DelphiTwainTypes, DelphiTwain_VCL,
   DelphiTwain_SettingsForm;
 
@@ -67,6 +67,7 @@ var
    aPath:String;
    res: Integer;
    rUserInterface: TW_USERINTERFACE;
+   test: Boolean;
 
 begin
     //Show Select Form and User Select a device
@@ -88,8 +89,13 @@ begin
         begin
           with TwainParams do
           begin
+//            capRet :=TwainSource.SetOneValue(CAP_AUTOMATICSENSEMEDIUM, False);
+
             capRet :=TwainSource.SetPaperFeeding(PaperFeed);
-            capRet :=TwainSource.SetDuplexEnabled(False);
+            if (PaperFeed=pfFeeder) then
+            begin
+              capRet :=TwainSource.SetDuplexEnabled(False);
+            end;
             capRet :=TwainSource.SetPaperSize(PaperSize);
             capRet :=TwainSource.SetIPixelType(PixelType);
 
@@ -142,6 +148,7 @@ var
   pixelCurrent:TTwainPixelType;
   resolutionCurrent:Single;
   i, cbSelected: Integer;
+  test: Boolean;
 
 begin
     btAcquire.Enabled :=False;
@@ -158,6 +165,10 @@ begin
       TwainSource.Loaded:=True;
 
       btAcquire.Enabled:= TwainSource.GetParamsCapabilities(TwainCap);
+
+//      capRet :=TwainSource.GetAutoScan(test);
+//      capRet :=TwainSource.GetAutoFeed(test);
+
     end;
 end;
 
