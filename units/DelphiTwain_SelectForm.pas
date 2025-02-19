@@ -16,8 +16,10 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, Buttons,
   ComCtrls, Twain, DelphiTwain, DelphiTwainTypes;
 
-type
+resourcestring
+  rsNoTwainDevicePresent = 'No Twain Devices present...';
 
+type
   { TTwainSelectSource }
 
   TTwainSelectSource = class;
@@ -121,10 +123,11 @@ begin
     then selIndex :=curItem.Index;
   end;
 
-  //Select Current Scanner
-  if (selIndex>-1)
-  then lvSources.ItemIndex :=selIndex
-  else lvSources.ItemIndex :=0;
+  if (lvSources.Items.Count=0)
+  then MessageDlg({$ifdef fpc}MsgApp,{$endif} rsNoTwainDevicePresent, mtError, [mbOk], 0)
+  else if (selIndex>-1)
+       then lvSources.ItemIndex :=selIndex   //Select Current Scanner
+       else lvSources.ItemIndex :=0;
 end;
 
 class function TTwainSelectSource.Execute(AMsgApp, AMsgAdditionalList: String; ARefreshClick: TRefreshNotify;
@@ -133,8 +136,7 @@ class function TTwainSelectSource.Execute(AMsgApp, AMsgAdditionalList: String; A
 begin
   Result :=False;
 
-  if (TwainSelectSource=nil)
-  then TwainSelectSource :=TTwainSelectSource.Create(nil);
+  if (TwainSelectSource=nil)then TwainSelectSource :=TTwainSelectSource.Create(nil);
 
   with TwainSelectSource do
   begin
@@ -143,33 +145,29 @@ begin
     MsgAdditionalList:= AMsgAdditionalList;
     Twain:= ATwain;
     rScannerInfo:= AScannerInfo;
+    rRefreshClick:= ARefreshClick;
+    btRefresh.Visible:= Assigned(rRefreshClick);
+
     FillList(addList);
+    Result:= (ShowModal=mrOk);
 
-    if (lvSources.Items.Count=0)
-    then MessageDlg({$ifdef fpc}MsgApp,{$endif} 'No Twain Devices present...', mtError, [mbOk], 0)
-    else begin
-           rRefreshClick:= ARefreshClick;
-           btRefresh.Visible:= Assigned(rRefreshClick);
-
-           Result:= (ShowModal=mrOk);
-           if Result then
-           begin
-             AScannerInfo.FromAddList:= (lvSources.ItemIndex >= countTwain_Source);
-             if AScannerInfo.FromAddList
-             then begin
-                    rSelectedIndex:= lvSources.ItemIndex-countTwain_Source;
-                    AScannerInfo.Manufacturer:= addList[rSelectedIndex].Manufacturer;
-                    AScannerInfo.ProductFamily:= addList[rSelectedIndex].ProductFamily;
-                    AScannerInfo.ProductName:= addList[rSelectedIndex].ProductName;
-                  end
-             else begin
-                    rSelectedIndex:= lvSources.ItemIndex;
-                    AScannerInfo.Manufacturer:= Twain.Source[rSelectedIndex].Manufacturer;
-                    AScannerInfo.ProductFamily:= Twain.Source[rSelectedIndex].ProductFamily;
-                    AScannerInfo.ProductName:= Twain.Source[rSelectedIndex].ProductName;
-                  end
-           end;
-         end;
+    if Result then
+    begin
+      AScannerInfo.FromAddList:= (lvSources.ItemIndex >= countTwain_Source);
+      if AScannerInfo.FromAddList
+      then begin
+             rSelectedIndex:= lvSources.ItemIndex-countTwain_Source;
+             AScannerInfo.Manufacturer:= addList[rSelectedIndex].Manufacturer;
+             AScannerInfo.ProductFamily:= addList[rSelectedIndex].ProductFamily;
+             AScannerInfo.ProductName:= addList[rSelectedIndex].ProductName;
+           end
+      else begin
+             rSelectedIndex:= lvSources.ItemIndex;
+             AScannerInfo.Manufacturer:= Twain.Source[rSelectedIndex].Manufacturer;
+             AScannerInfo.ProductFamily:= Twain.Source[rSelectedIndex].ProductFamily;
+             AScannerInfo.ProductName:= Twain.Source[rSelectedIndex].ProductName;
+           end
+    end;
   end;
 end;
 

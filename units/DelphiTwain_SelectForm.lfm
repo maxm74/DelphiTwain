@@ -1,29 +1,29 @@
 object TwainSelectSource: TTwainSelectSource
   Left = 451
-  Height = 321
+  Height = 400
   Top = 220
-  Width = 458
+  Width = 600
   ActiveControl = lvSources
   Caption = 'Select Twain Source'
-  ClientHeight = 321
-  ClientWidth = 458
+  ClientHeight = 400
+  ClientWidth = 600
+  DesignTimePPI = 120
   Position = poScreenCenter
-  LCLVersion = '4.99.0.0'
   object panelButtons: TPanel
     Left = 0
-    Height = 40
-    Top = 281
-    Width = 458
+    Height = 50
+    Top = 350
+    Width = 600
     Align = alBottom
     BevelOuter = bvSpace
-    ClientHeight = 40
-    ClientWidth = 458
+    ClientHeight = 50
+    ClientWidth = 600
     TabOrder = 0
     object btCancel: TBitBtn
-      Left = 286
-      Height = 34
+      Left = 385
+      Height = 42
       Top = 2
-      Width = 87
+      Width = 109
       Anchors = [akRight, akBottom]
       DefaultCaption = True
       Kind = bkCancel
@@ -31,22 +31,21 @@ object TwainSelectSource: TTwainSelectSource
       TabOrder = 0
     end
     object btOk: TBitBtn
-      Left = 377
-      Height = 34
+      Left = 498
+      Height = 42
       Top = 2
-      Width = 75
+      Width = 94
       Anchors = [akRight, akBottom]
-      Default = True
       DefaultCaption = True
       Kind = bkOK
       ModalResult = 1
       TabOrder = 1
     end
     object btRefresh: TBitBtn
-      Left = 8
-      Height = 34
+      Left = 10
+      Height = 42
       Top = 2
-      Width = 101
+      Width = 126
       Caption = 'Refresh'
       Glyph.Data = {
         36100000424D3610000000000000360000002800000020000000200000000100
@@ -187,34 +186,34 @@ object TwainSelectSource: TTwainSelectSource
   end
   object Panel1: TPanel
     Left = 0
-    Height = 281
+    Height = 350
     Top = 0
-    Width = 458
+    Width = 600
     Align = alClient
     BevelInner = bvRaised
-    ClientHeight = 281
-    ClientWidth = 458
+    ClientHeight = 350
+    ClientWidth = 600
     TabOrder = 1
     object lvSources: TListView
       Left = 2
-      Height = 277
+      Height = 346
       Top = 2
-      Width = 454
+      Width = 596
       Align = alClient
       AutoWidthLastColumn = True
       Columns = <      
         item
           Caption = 'Name'
-          MinWidth = 100
-          Width = 100
+          MinWidth = 125
+          Width = 125
         end      
         item
           Caption = 'Manufacturer'
-          MinWidth = 100
-          Width = 100
+          MinWidth = 125
+          Width = 125
         end      
         item
-          Width = 100
+          Width = 125
         end>
       ColumnClick = False
       HideSelection = False
