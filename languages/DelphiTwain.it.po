@@ -11,6 +11,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.5\n"
 
+#: delphitwain_selectform.rsnotwaindevicepresent
+msgid "No Twain Devices present..."
+msgstr "Nessu Dispositivo Twain presente..."
+
 #: ttwainselectsource.btrefresh.caption
 msgctxt "ttwainselectsource.btrefresh.caption"
 msgid "Refresh"

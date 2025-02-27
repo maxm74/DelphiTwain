@@ -1,30 +1,30 @@
 object TwainSettingsSource: TTwainSettingsSource
   Left = 451
-  Height = 321
+  Height = 401
   Top = 220
-  Width = 458
+  Width = 572
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Settings of Twain Source'
-  ClientHeight = 321
-  ClientWidth = 458
+  ClientHeight = 401
+  ClientWidth = 572
+  DesignTimePPI = 120
   Position = poScreenCenter
-  LCLVersion = '4.99.0.0'
   object panelButtons: TPanel
     Left = 0
-    Height = 40
-    Top = 281
-    Width = 458
+    Height = 50
+    Top = 351
+    Width = 572
     Align = alBottom
     BevelOuter = bvSpace
-    ClientHeight = 40
-    ClientWidth = 458
+    ClientHeight = 50
+    ClientWidth = 572
     TabOrder = 0
     object btCancel: TBitBtn
-      Left = 286
-      Height = 34
-      Top = 2
-      Width = 87
+      Left = 357
+      Height = 42
+      Top = 3
+      Width = 109
       Anchors = [akRight, akBottom]
       DefaultCaption = True
       Kind = bkCancel
@@ -32,10 +32,10 @@ object TwainSettingsSource: TTwainSettingsSource
       TabOrder = 0
     end
     object btOk: TBitBtn
-      Left = 377
-      Height = 34
-      Top = 2
-      Width = 75
+      Left = 470
+      Height = 42
+      Top = 3
+      Width = 94
       Anchors = [akRight, akBottom]
       Default = True
       DefaultCaption = True
@@ -44,10 +44,10 @@ object TwainSettingsSource: TTwainSettingsSource
       TabOrder = 1
     end
     object btRefresh: TBitBtn
-      Left = 8
-      Height = 34
+      Left = 10
+      Height = 42
       Top = 2
-      Width = 101
+      Width = 126
       Caption = 'Refresh'
       Glyph.Data = {
         36100000424D3610000000000000360000002800000020000000200000000100
@@ -187,84 +187,84 @@ object TwainSettingsSource: TTwainSettingsSource
   end
   object Panel1: TPanel
     Left = 0
-    Height = 281
+    Height = 351
     Top = 0
-    Width = 458
+    Width = 572
     Align = alClient
     BevelInner = bvRaised
-    ClientHeight = 281
-    ClientWidth = 458
+    ClientHeight = 351
+    ClientWidth = 572
     TabOrder = 1
     object cbUseNativeUI: TCheckBox
-      Left = 8
-      Height = 19
+      Left = 10
+      Height = 24
       Top = 0
-      Width = 88
+      Width = 110
       Caption = 'Use Native UI'
       TabOrder = 0
     end
     object panelUI: TPanel
-      Left = 8
-      Height = 256
-      Top = 24
-      Width = 450
+      Left = 10
+      Height = 320
+      Top = 30
+      Width = 562
       BevelOuter = bvNone
-      ClientHeight = 256
-      ClientWidth = 450
+      ClientHeight = 320
+      ClientWidth = 562
       TabOrder = 1
       object cbPaperFeeding: TComboBox
-        Left = 12
-        Height = 23
-        Top = 17
-        Width = 192
-        ItemHeight = 15
+        Left = 15
+        Height = 28
+        Top = 21
+        Width = 240
+        ItemHeight = 20
         Style = csDropDownList
         TabOrder = 0
       end
       object Label1: TLabel
-        Left = 12
-        Height = 15
+        Left = 15
+        Height = 20
         Top = 0
-        Width = 79
+        Width = 99
         Caption = 'Paper feeding :'
       end
       object Label2: TLabel
-        Left = 12
-        Height = 15
-        Top = 49
-        Width = 59
+        Left = 15
+        Height = 20
+        Top = 61
+        Width = 75
         Caption = 'Paper Size :'
       end
       object cbPaperSize: TComboBox
-        Left = 12
-        Height = 23
-        Top = 66
-        Width = 192
-        ItemHeight = 15
+        Left = 15
+        Height = 28
+        Top = 82
+        Width = 240
+        ItemHeight = 20
         Style = csDropDownList
         TabOrder = 1
       end
       object Label3: TLabel
-        Left = 12
-        Height = 15
-        Top = 200
-        Width = 62
+        Left = 15
+        Height = 20
+        Top = 250
+        Width = 77
         Caption = 'Resolution :'
       end
       object cbResolution: TComboBox
-        Left = 12
-        Height = 23
-        Top = 217
-        Width = 192
-        ItemHeight = 15
+        Left = 15
+        Height = 28
+        Top = 271
+        Width = 240
+        ItemHeight = 20
         Style = csDropDownList
         TabOrder = 2
       end
       object trBrightness: TTrackBar
-        Left = 240
-        Height = 25
-        Top = 16
-        Width = 144
+        Left = 300
+        Height = 31
+        Top = 20
+        Width = 180
         Max = 1000
         Min = -1000
         Position = 0
@@ -273,27 +273,27 @@ object TwainSettingsSource: TTwainSettingsSource
         TabOrder = 3
       end
       object Label4: TLabel
-        Left = 245
-        Height = 15
+        Left = 306
+        Height = 20
         Top = 0
-        Width = 61
+        Width = 75
         Caption = 'Brightness :'
       end
       object edBrightness: TSpinEdit
-        Left = 385
-        Height = 23
-        Top = 16
-        Width = 50
+        Left = 481
+        Height = 28
+        Top = 20
+        Width = 62
         MaxValue = 1000
         MinValue = -1000
         TabOrder = 4
         OnChange = edBrightnessChange
       end
       object trContrast: TTrackBar
-        Left = 241
-        Height = 25
-        Top = 64
-        Width = 144
+        Left = 301
+        Height = 31
+        Top = 80
+        Width = 180
         Max = 1000
         Min = -1000
         Position = 0
@@ -302,28 +302,28 @@ object TwainSettingsSource: TTwainSettingsSource
         TabOrder = 5
       end
       object edContrast: TSpinEdit
-        Left = 385
-        Height = 23
-        Top = 66
-        Width = 50
+        Left = 481
+        Height = 28
+        Top = 82
+        Width = 62
         MaxValue = 1000
         MinValue = -1000
         TabOrder = 6
         OnChange = edContrastChange
       end
       object Label5: TLabel
-        Left = 247
-        Height = 15
-        Top = 49
-        Width = 51
+        Left = 309
+        Height = 20
+        Top = 61
+        Width = 62
         Caption = 'Contrast :'
       end
       object btOrientation: TSpeedButton
-        Left = 208
-        Height = 22
+        Left = 260
+        Height = 28
         Hint = 'Paper Orientation'
-        Top = 67
-        Width = 23
+        Top = 84
+        Width = 29
         AllowAllUp = True
         Flat = True
         GroupIndex = 1
@@ -335,34 +335,34 @@ object TwainSettingsSource: TTwainSettingsSource
         OnClick = btOrientationClick
       end
       object Label6: TLabel
-        Left = 12
-        Height = 15
-        Top = 96
-        Width = 55
+        Left = 15
+        Height = 20
+        Top = 120
+        Width = 70
         Caption = 'Bit Depth :'
       end
       object cbBitDepth: TComboBox
-        Left = 12
-        Height = 23
-        Top = 113
-        Width = 192
-        ItemHeight = 15
+        Left = 15
+        Height = 28
+        Top = 141
+        Width = 240
+        ItemHeight = 20
         Style = csDropDownList
         TabOrder = 7
       end
       object Label7: TLabel
-        Left = 12
-        Height = 15
-        Top = 144
-        Width = 66
+        Left = 15
+        Height = 20
+        Top = 180
+        Width = 84
         Caption = 'Image Type :'
       end
       object cbPixelType: TComboBox
-        Left = 12
-        Height = 23
-        Top = 161
-        Width = 192
-        ItemHeight = 15
+        Left = 15
+        Height = 28
+        Top = 201
+        Width = 240
+        ItemHeight = 20
         Style = csDropDownList
         TabOrder = 8
       end
@@ -371,8 +371,8 @@ object TwainSettingsSource: TTwainSettingsSource
   object imgList: TImageList
     Height = 22
     Width = 22
-    Left = 216
-    Top = 272
+    Left = 270
+    Top = 340
     Bitmap = {
       4C7A0A00000016000000160000008B1900000000000078DAED5B09745445D60E
       8B38338EFF8C82308EB3E83032CC8C886CEA0C0A2E20A88880B2B8A08822BBCA

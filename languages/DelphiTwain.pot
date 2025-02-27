@@ -1,8 +1,11 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+#: delphitwain_selectform.rsnotwaindevicepresent
+msgid "No Twain Devices present..."
+msgstr ""
+
 #: ttwainselectsource.btrefresh.caption
-msgctxt "ttwainselectsource.btrefresh.caption"
 msgid "Refresh"
 msgstr ""
 
@@ -43,7 +46,6 @@ msgid "Paper Orientation"
 msgstr ""
 
 #: ttwainsettingssource.btrefresh.caption
-msgctxt "ttwainsettingssource.btrefresh.caption"
 msgid "Refresh"
 msgstr ""
 
