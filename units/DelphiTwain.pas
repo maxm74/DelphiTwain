@@ -274,11 +274,12 @@ type
     function SetupFileTransfer(APath, AFileName, AExt: String; Format: TTwainFormat): Boolean;
 
     //Enable Source and Start the Images Transfer in APath, if multiple pages is downloaded then
-    // the file names are APath\AFileName-n.AExt where n is then Index (when 0 n is not present)
+    // the file names are APath\AFileName-n.AExt where n is then Index (n is not present when 0)
     function Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
                       Format: TTwainFormat): Integer; overload;
     function Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
-                      Format: TTwainFormat; var DownloadedFiles: TStringArray): Integer; overload;
+                      Format: TTwainFormat;
+                      var DownloadedFiles: TStringArray; UseRelativePath: Boolean=False): Integer; overload;
 
     {Set source transfer mode}
     //function ChangeTransferMode(NewMode: TTwainTransferMode): TCapabilityRet;
@@ -3782,7 +3783,8 @@ begin
 end;
 
 function TTwainSource.Download(UserInterface: TW_USERINTERFACE; APath, AFileName, AExt: String;
-                               Format: TTwainFormat; var DownloadedFiles: TStringArray): Integer;
+                               Format: TTwainFormat;
+                               var DownloadedFiles: TStringArray; UseRelativePath: Boolean): Integer;
 var
    i: Integer;
 
@@ -3793,10 +3795,18 @@ begin
   if (Result > 0 ) then
   begin
     SetLength(DownloadedFiles, Result);
-    DownloadedFiles[0]:= rDownload_Path+rDownload_FileName+rDownload_Ext;
-    for i:=1 to Result-1 do
-      DownloadedFiles[i]:= rDownload_Path+rDownload_FileName+
-                           '-'+IntToStr(i)+rDownload_Ext;
+
+    if UseRelativePath
+    then begin
+           DownloadedFiles[0]:= rDownload_FileName+rDownload_Ext;
+           for i:=1 to Result-1 do
+             DownloadedFiles[i]:= rDownload_FileName+'-'+IntToStr(i)+rDownload_Ext;
+         end
+    else begin
+           DownloadedFiles[0]:= rDownload_Path+rDownload_FileName+rDownload_Ext;
+           for i:=1 to Result-1 do
+             DownloadedFiles[i]:= rDownload_Path+rDownload_FileName+'-'+IntToStr(i)+rDownload_Ext;
+         end;
   end;
 end;
 
