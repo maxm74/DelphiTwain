@@ -25,6 +25,7 @@ package delphitwain_dpkg;
 {$IMAGEBASE $400000}
 {$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'Twain features for Free Pascal and Delphi'}
 {$RUNONLY}
 {$IMPLICITBUILD ON}
 

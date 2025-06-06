@@ -3,6 +3,7 @@
   <Package Version="5">
     <PathDelim Value="\"/>
     <Name Value="DelphiTwain_pkg"/>
+    <Author Value="Massimo Magnano"/>
     <CompilerOptions>
       <Version Value="11"/>
       <PathDelim Value="\"/>
@@ -10,7 +11,13 @@
         <OtherUnitFiles Value="units"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="2"/>
+        </Optimizations>
+      </CodeGeneration>
     </CompilerOptions>
+    <Description Value="Twain features for Free Pascal and Delphi"/>
     <Version Major="2" Minor="3"/>
     <Files>
       <Item>
