@@ -1,28 +1,20 @@
-{DELPHI IMPLEMENTATION OF TWAIN INTERFACE}
-{Initially created by Gustavo Daud in December 2003}
-
-{This is my newest contribution for Delphi comunity, a powerfull}
-{implementation of latest Twain features. As you know, twain is }
-{the most common library to acquire images from most acquisition}
-{devices such as Scanners and Web-Cameras.}
-
-{Twain library is a bit different from other libraries, because}
-{most of the hard work can be done by a a single method. Also it}
-{automatically changes in the application message loop, which is}
-{not a simple task, at least in delphi VCL.}
-
-{It is not 100% sure to to Twain not to be installed in Windows,}
-{as it ships with Windows and later and with most of the }
-{acquisition device drivers (automatically with their installation)}
-{This library dynamically calls the library, avoiding the application}
-{hang when it is not present.}
-
-{Also, as in most of my other components, I included a trigger}
-{to allow the component to work without the heavy delphi VCL}
-{for small final executables. To enable, edit DelphiTwain.inc}
-
-{ CHANGE LOG: See changelog.txt }
-
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: DelphiTwain.pas                                                      *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    Twain implementation base Classes                                        *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2003 Gustavo Daud, 2025 Massimo Magnano                                *
+*                                                                             *
+*  See changelog.txt for Change Log                                           *
+*                                                                             *
+*******************************************************************************)
 unit DelphiTwain;
 
 {$I DelphiTwain.inc}
@@ -774,21 +766,23 @@ var
   Dir: String;
 begin
   {Searches in all the directories}
-  FOR i := LOW(TDirectoryKind) TO HIGH(TDirectoryKind) DO
+  for i :=Low(TDirectoryKind) to High(TDirectoryKind) do
   begin
-
-    {Directory to search}
-    Dir := GetCustomDirectory(i);
-    {Tests if the file exists in this directory}
-    if FileExists(Dir + ALib) then
-    begin
-      {In case it exists, returns this directory and exit}
-      {the for loop}
-      Result := Dir;
-      Break;
-    end {if FileExists}
-
-  end {FOR i}
+    try
+       {Directory to search}
+       Dir := GetCustomDirectory(i);
+       {Tests if the file exists in this directory}
+       if FileExists(Dir + ALib) then
+       begin
+         {In case it exists, returns this directory and exit}
+         {the for loop}
+         Result := Dir;
+         Break;
+       end;
+    except
+      //FileExists got an ERangeError Exception when File does not exists
+    end;
+  end;
 end;
 
 {This method returns if Twain is installed in the current machine}

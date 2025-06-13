@@ -1,5 +1,9 @@
 DELPHITWAIN CHANGE LOG
 ======================
+2025/06/13 MaxM - Release 2.3.1;
+		  Updated Copyright and Version Infos;
+	  	  GetTwainDirectory handle FileExists Exception;
+
 2025/02/28 MaxM - Added UseRelativePath to Download
 
 2025/01/08 MaxM - Set CAP_AUTOSCAN/CAP_AUTOFEED Only if FeederEnabled is True

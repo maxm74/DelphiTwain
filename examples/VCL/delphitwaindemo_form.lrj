@@ -4,5 +4,7 @@
 {"hash":207909541,"name":"tformtwaindemo.btselect.caption","sourcebytes":[83,101,108,101,99,116,32,83,111,117,114,99,101],"value":"Select Source"},
 {"hash":20414085,"name":"tformtwaindemo.cbnativecapture.caption","sourcebytes":[78,97,116,105,118,101,32,67,97,112,116,117,114,101],"value":"Native Capture"},
 {"hash":5528188,"name":"tformtwaindemo.cbmodalcapture.caption","sourcebytes":[77,111,100,97,108],"value":"Modal"},
-{"hash":94334105,"name":"tformtwaindemo.cbshowui.caption","sourcebytes":[83,104,111,119,85,73],"value":"ShowUI"}
+{"hash":94334105,"name":"tformtwaindemo.cbshowui.caption","sourcebytes":[83,104,111,119,85,73],"value":"ShowUI"},
+{"hash":5671610,"name":"tformtwaindemo.label2.caption","sourcebytes":[80,97,116,104,58],"value":"Path:"},
+{"hash":244566638,"name":"tformtwaindemo.btbrowse.caption","sourcebytes":[66,114,111,119,115,101,32,46,46,46],"value":"Browse ..."}
 ]}

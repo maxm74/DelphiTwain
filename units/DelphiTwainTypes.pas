@@ -1,10 +1,19 @@
-(*******************************************************************************
-**                                  Delphi Twain                              **
-**                                                                            **
-**          (c) 2024 Massimo Magnano                                          **
-**                                                                            **
-********************************************************************************
-**   Twain Source Data Types and Consts                                       **
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: DelphiTwainTypes.pas                                                 *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    Twain Source Data Types and Consts                                       *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2025 Massimo Magnano                                                   *
+*                                                                             *
+*  See changelog.txt for Change Log                                           *
+*                                                                             *
 *******************************************************************************)
 unit DelphiTwainTypes;
 

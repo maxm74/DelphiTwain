@@ -17,8 +17,8 @@
         </Optimizations>
       </CodeGeneration>
     </CompilerOptions>
-    <Description Value="Twain features for Free Pascal and Delphi"/>
-    <Version Major="2" Minor="3"/>
+    <Description Value="Twain Scanner features for Free Pascal and Delphi"/>
+    <Version Major="2" Minor="3" Release="1"/>
     <Files>
       <Item>
         <Filename Value="units\Twain.pas"/>

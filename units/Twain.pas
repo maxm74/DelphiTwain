@@ -1,171 +1,79 @@
-{******************************************************************}
-{                                                                  }
-{ Borland Delphi Runtime Library                                   }
-{ Twain interface unit                                             }
-{                                                                  }
-{ Portions created by TWAIN Working Group,                         }
-{ see Copyright statement from original file below                 }
-{                                                                  }
-{ The original file is: twain.h, released March 15, 2000.          }
-{ The original Pascal code is: twain.pas, released 20. Dez 1999.   }
-{ The initial developer of the Pascal code is: Uli Tessel (UT)     }
-{ (UliTessel@swol.de) with help of Matthias Thoma (MT)             }
-{ (ma.thoma@gmx.de)                                                }
-{ Translation cleaned up and updated to twain 1.9 by:              }
-{ Martin Olsson (MO), mnemo@home.se                                }
-{ Updated to twain 2.0 (Dec 2008), 2.1 (Mar 2009) by:              }
-{ Lorenzo Monti (LM)                                               }
-{ lomo74@gmail.com    http://www.lorenzomonti.it/                  }
-{                                                                  }
-{ Obtained through:                                                }
-{ Joint Endeavour of Delphi Innovators (Project JEDI)              }
-{                                                                  }
-{ You may retrieve the latest version of this file at the Project  }
-{ JEDI home page, located at http://delphi-jedi.org                }
-{                                                                  }
-{ The contents of this file are used with permission, subject to   }
-{ the Mozilla Public License Version 1.1 (the "License"); you may  }
-{ not use this file except in compliance with the License. You may }
-{ obtain a copy of the License at                                  }
-{ http://www.mozilla.org/MPL/MPL-1.1.html                          }
-{                                                                  }
-{ Software distributed under the License is distributed on an      }
-{ "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or   }
-{ implied. See the License for the specific language governing     }
-{ rights and limitations under the License.                        }
-{                                                                  }
-{******************************************************************}
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: Twain.pas                                                            *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    Twain include file for applications and data sources written to          *
+*    the TWAIN specification. It defines constants, data structures,          *
+*    messages etc. for the public interface to TWAIN                          *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2025 Massimo Magnano                                                   *
+*      see Other Copyrights below                                             *                                                                             *
+*                                                                             *
+*  See changelog.txt and changelog_twain.txt for Change Log                   *
+*                                                                             *
+*******************************************************************************
 
-{ ========================================================================            }
-{                                                                                     }
-{  Copyright (C) 2007 TWAIN Working Group: Adobe Systems Incorporated,                }
-{  AnyDoc Software Inc., Eastman Kodak Company, Fujitsu Computer Products             }
-{  of America, JFL Peripheral Solutions Inc., Ricoh Corporation, and                  }
-{  Xerox Corporation.  All rights reserved.                                           }
-{                                                                                     }
-{  Copyright (C) 1991, 1992 TWAIN Working Group: Aldus, Caere, Eastman-Kodak,         }
-{  Hewlett-Packard and Logitech Corporations.  All rights reserved.                   }
-{                                                                                     }
-{  Copyright (C) 1997 TWAIN Working Group: Bell+Howell, Canon, DocuMagix,             }
-{  Fujitsu, Genoa Technology, Hewlett-Packard, Kofax Imaging Products, and            }
-{  Ricoh Corporation.  All rights reserved.                                           }
-{                                                                                     }
-{  Copyright © 1998 TWAIN Working Group: Adobe Systems Incorporated,                  }
-{  Canon Information Systems, Eastman Kodak Company,                                  }
-{  Fujitsu Computer Products of America, Genoa Technology,                            }
-{  Hewlett-Packard Company, Intel Corporation, Kofax Image Products,                  }
-{  JFL Peripheral Solutions Inc., Ricoh Corporation, and Xerox Corporation.           }
-{  All rights reserved.                                                               }
-{                                                                                     }
-{  Copyright © 2000 TWAIN Working Group: Adobe Systems Incorporated,                  }
-{  Canon Information Systems, Digimarc Corporation, Eastman Kodak Company,            }
-{  Fujitsu Computer Products of America, Hewlett-Packard Company,                     }
-{  JFL Peripheral Solutions Inc., Ricoh Corporation, and Xerox Corporation.           }
-{  All rights reserved.                                                               }
-{                                                                                     }
-{                                                                                     }
-{  TWAIN.h -  This is the definitive include file for applications and                }
-{          data sources written to the TWAIN specification.                           }
-{          It defines constants, data structures, messages etc.                       }
-{          for the public interface to TWAIN.                                         }
-{                                                                                     }
-{  Revision History:                                                                  }
-{    version 1.0, March 6, 1992.  TWAIN 1.0.                                          }
-{    version 1.1, January 1993.   Tech Notes 1.1                                      }
-{    version 1.5, June 1993.      Specification Update 1.5                            }
-{                                 Change DC to TW                                     }
-{                                 Change filename from DC.H to TWAIN.H                }
-{    version 1.5, July 1993.      Remove spaces from country identifiers              }
-{                                                                                     }
-{    version 1.7, July 1997       Added Capabilities and data structure for           }
-{                                 document imaging and digital cameras.               }
-{                                 KHL.                                                }
-{    version 1.7, July 1997       Inserted Borland compatibile structure packing      }
-{                                 directives provided by Mentor.  JMH                 }
-{    version 1.7, Aug 1997        Expanded file tabs to spaces.                       }
-{                                 NOTE: future authors should be sure to have         }
-{                                 their editors set to automatically expand tabs      }
-{                                 to spaces (original tab setting was 4 spaces).      }
-{    version 1.7, Sept 1997       Added job control values                            }
-{                                 Added return codes                                  }
-{    version 1.7, Sept 1997       changed definition of pRGBRESPONSE to               }
-{                                 pTW_RGBRESPONSE                                     }
-{    version 1.7  Aug 1998        Added missing TWEI_BARCODEROTATION values           }
-{                                 TWBCOR_ types JMH                                   }
-{    version 1.8  August 1998     Added new types and definitions required            }
-{                                 for 1.8 Specification JMH                           }
-{    version 1.8  January 1999    Changed search mode from SRCH_ to TWBD_ as          }
-{                                 in 1.8 Specification, added TWBT_MAXICODE JMH       }
-{    version 1.8  January 1999    Removed undocumented duplicate AUTO<cap> JMH        }
-{    version 1.8  March 1999      Removed undocumented 1.8 caps:                      }
-{                                 CAP_FILESYSTEM                                      }
-{                                 CAP_PAPERBINDING                                    }
-{                                 CAP_PASSTHRU                                        }
-{                                 CAP_POWERDOWNTIME                                   }
-{                                 ICAP_AUTODISCARDBLANKPAGES                          }
-{                               * CAP_PAGEMULTIPLEACQUIRE - is CAP_REACQUIREALLOWED,  }
-{                               requires spec change.  JMH                            }
-{                                 Added Mac structure packing modifications JMH       }
-{    version 1.9  March 2000  Added new types and definations required                }
-{                             for 1.9 Specification MLM                               }
-{    version 1.9  March 2000  Added ICAP_JPEGQUALITY, TWJQ_ values,                   }
-{                                 updated TWON_PROTOCOLMINOR for Release v1.9 MN      }
-{    version 1.91 August 2007     Added new types and definitions required            }
-{                                 for 1.91 Specification MLM                          }
-{    version 2.0  Sept 2007       Added new types and definitions required            }
-{                                 for 2.0 Specification FHH                           }
-{    version 2.0  Mar 2008        Depreciated ICAP_PIXELTYPEs TWPT_SRGB64, TWPT_BGR,  }
-{                                 TWPT_CIELAB, TWPT_CIELUV, and TWPT_YCBCR  JMW       }
-{    version 2.0  Mar 2008        Added missing new 2.0 CAP_ definitions JMW          }
-{    version 2.0  Dec 2008        Updated TW_INFO structure for 64bit JMW             }
-{    version 2.1  Mar 2009        Added new types and definitions required            }
-{                                 for 2.1 Specification JMW                           }
-{    version 2.2  Nov 2010        Added new types and definitions required            }
-{                                 for 2.2 Specification MSM                           }
-{ ========================================================================            }
+ Portions created by TWAIN Working Group,
 
-{ Revision History for translation:                                             }
-{                                                                               }
-{   Version 1.8.0: 29.08.99 - UT                                                }
-{      Initial translation, based on twain.h, version 1.8                       }
-{                                                                               }
-{   Version 1.8.1: 12.09.99 - UT                                                }
-{      SizeOf for all structures checked and corrected.                         }
-{      (Alignment is 2 Bytes for the C Code and 'packed record' uses            }
-{      1 Byte alignment. Only types using TW_xINT8 are affected)                }
-{                                                                               }
-{   Version 1.8.2: 19.12.99 UT                                                  }
-{      Added MPL and the other JEDI Statements                                  }
-{      Added EXTERNALSYMS to support C++ Builder                                }
-{      Created the .PAR file (no Unicode things are used by the TWAIN API?)     }
-{      A bit better formatting of the source                                    }
-{                                                                               }
-{   Version 1.8.3: 20.12.99                                                     }
-{      MT: Added Delphi-Aliases to the structures (like TTWFrame = TW_FRAME)    }
-{      UT: Added missing Externalyms for some constants                         }
-{                                                                               }
-{   Version 1.9.0: 01.12.00                                                     }
-{      MO: Updated translation to conform with twain.h 1.9                      }
-{      MO: Cleaned up style to to fit JEDI standards                            }
-{                                                                               }
-{   Version 2.0.0: 26.06.09                                                     }
-{      LM: Forced $ALIGN 2, removed 'packed' and paddings from all records.     }
-{          SizeOf and member offsets for all structures checked ok.             }
-{          Changed some variables to use types from System unit                 }
-{          rather than from Windows unit.                                       }
-{          Maybe beautified code.                                               }
-{      LM: Updated to twain 2.0 (Dec 2008)                                      }
-{                                                                               }
-{   Version 2.1.0: 08.02.10                                                     }
-{      LM: Added support for Delphi 2009 / 2010                                 }
-{      LM: Updated to twain 2.1 (Mar 2009)                                      }
-{                                                                               }
-{   Version 2.1.1: 31.08.10                                                     }
-{      LM: Added support for Delphi 5                                           }
-{                                                                               }
-{   Version 2.2: 08.02.13                                                       }
-{      LM: Updated to twain 2.2 (Nov 2010)                                      }
+ The original file is: twain.h, released March 15, 2000.
+ The original Pascal code is: twain.pas, released 20. Dez 1999.
 
+ The initial developer of the Pascal code is:
+   Uli Tessel (UT)(UliTessel@swol.de) with help of Matthias Thoma(MT)(ma.thoma@gmx.de)
+
+ Translation cleaned up and updated to twain 1.9 by:
+   Martin Olsson (MO), mnemo@home.se
+
+ Updated to twain 2.0 (Dec 2008), 2.1 (Mar 2009) by:
+   Lorenzo Monti (LM) lomo74@gmail.com  www.lorenzomonti.it
+
+ Obtained through:
+   Joint Endeavour of Delphi Innovators (Project JEDI) delphi-jedi.org
+
+ The contents of this file are used with permission, subject to the
+ Mozilla Public License Version 1.1 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ http://www.mozilla.org/MPL/MPL-1.1.html
+
+ Software distributed under the License is distributed on an
+ "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ implied. See the License for the specific language governing
+ rights and limitations under the License.
+
+*******************************************************************************
+
+  Copyright (C) 2007 TWAIN Working Group: Adobe Systems Incorporated,
+  AnyDoc Software Inc., Eastman Kodak Company, Fujitsu Computer Products
+  of America, JFL Peripheral Solutions Inc., Ricoh Corporation, and
+  Xerox Corporation.  All rights reserved.
+
+  Copyright (C) 1991, 1992 TWAIN Working Group: Aldus, Caere, Eastman-Kodak,
+  Hewlett-Packard and Logitech Corporations.  All rights reserved.
+
+  Copyright (C) 1997 TWAIN Working Group: Bell+Howell, Canon, DocuMagix,
+  Fujitsu, Genoa Technology, Hewlett-Packard, Kofax Imaging Products, and
+  Ricoh Corporation.  All rights reserved.
+
+  Copyright © 1998 TWAIN Working Group: Adobe Systems Incorporated,
+  Canon Information Systems, Eastman Kodak Company,
+  Fujitsu Computer Products of America, Genoa Technology,
+  Hewlett-Packard Company, Intel Corporation, Kofax Image Products,
+  JFL Peripheral Solutions Inc., Ricoh Corporation, and Xerox Corporation.
+  All rights reserved.
+
+  Copyright © 2000 TWAIN Working Group: Adobe Systems Incorporated,
+  Canon Information Systems, Digimarc Corporation, Eastman Kodak Company,
+  Fujitsu Computer Products of America, Hewlett-Packard Company,
+  JFL Peripheral Solutions Inc., Ricoh Corporation, and Xerox Corporation.
+  All rights reserved.
+*******************************************************************************)
 unit Twain;
 
 {$IFDEF VER80}{$DEFINE DELPHI_6_PRIOR}{$ENDIF}

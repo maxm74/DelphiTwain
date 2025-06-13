@@ -1,3 +1,33 @@
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: DelphiTwainDemo_Form.pas                                             *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    Twain Demo Form.                                                         *
+*    This is a Package demo not a full scanning application,                  *
+*    see the DigIt project on my GitHub repository for that.                  *
+*                                                                             *
+*  Most Twain Scanners have a 32-bit driver, so if you compile this project   *
+*  as a 64-bit project you will not be able to acquire an image.              *
+*  In fact, Windows cannot load a 32-bit DLL inside a 64-bit application.     *
+*  If you want to use a 32-bit scanner you MUST compile this project as a     *
+*  32-bit project, if you want to use a 64-bit scanner you MUST compile it    *
+*  as a 64-bit project.                                                       *
+*                                                                             *
+*  This is a limitation of the Operating System, not of the Package.          *
+*                                                                             *
+*  This demo project has both 32-bit and 64-bit Build Modes.                  *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2025 Massimo Magnano                                                   *
+*                                                                             *
+*  See changelog.txt for Change Log                                           *
+*                                                                             *
+*******************************************************************************)
 unit DelphiTwainDemo_Form;
 
 {$IFDEF FPC}
@@ -19,14 +49,20 @@ type
 
   TFormTwainDemo = class(TForm)
     btAcquire: TButton;
+    btBrowse: TButton;
     btSelect: TButton;
     cbNativeCapture: TCheckBox;
     cbModalCapture: TCheckBox;
     cbShowUI: TCheckBox;
+    edPath: TEdit;
     ImageHolder: TImage;
+    Label2: TLabel;
+    lbSelected: TLabel;
     Panel1: TPanel;
+    procedure btBrowseClick(Sender: TObject);
     procedure btSelectClick(Sender: TObject);
     procedure btAcquireClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
   private
     rTwain:TDelphiTwain;
@@ -53,10 +89,33 @@ var
 implementation
 
 
-{$ifdef FPC}
+{$ifdef fpc}
   {$R *.lfm}
+
+function SelectPath(var ADir: String): Boolean;
+var
+   selDir: TSelectDirectoryDialog;
+
+begin
+  try
+     selDir:= TSelectDirectoryDialog.Create(FormTwainDemo);
+     Result:= selDir.Execute;
+     if Result then ADir:= selDir.FileName;
+
+  finally
+    selDir.Free;
+  end;
+end;
+
 {$else}
   {$R *.dfm}
+
+uses FileCtrl;
+
+function SelectPath(var ADir: String): Boolean;
+begin
+  Result:= SelectDirectory(ADir, [sdAllowCreate], 0);
+end;
 {$endif}
 
 
@@ -65,7 +124,7 @@ implementation
 procedure TFormTwainDemo.btAcquireClick(Sender: TObject);
 var
    aPath:String;
-   res: Integer;
+   c: Integer;
    rUserInterface: TW_USERINTERFACE;
    test: Boolean;
 
@@ -75,10 +134,7 @@ begin
 
     if Assigned(Twain.SelectedSource) then
     begin
-     (* aPath:=ExtractFilePath(ParamStr(0))+'test_0.bmp';
-      if FileExists(aPath)
-      then DeleteFile(aPath);
-      *)
+      aPath:= edPath.Text;
 
       TwainSource :=Twain.SelectedSource;
       TwainSource.Loaded := True;
@@ -121,12 +177,12 @@ begin
           rUserInterface.hParent:= Application.ActiveFormHandle;
           rUserInterface.ModalUI:= cbModalCapture.Checked;
           rUserInterface.ShowUI:= cbShowUI.Checked;
-          res:= TwainSource.Download(rUserInterface, ExtractFilePath(ParamStr(0)), 'test', '.bmp', tfBMP);
+          c:= TwainSource.Download(rUserInterface, aPath, 'twain_demo', '.bmp', tfBMP);
 
-          if (res > 0)
+          if (c > 0)
           then begin
-                 MessageDlg('Downloaded '+IntToStr(res)+' Files', mtInformation, [mbOk], 0);
-                 ImageHolder.Picture.Bitmap.LoadFromFile('test.bmp')
+                 MessageDlg('Downloaded '+IntToStr(c)+' Files on'#13#10+aPath, mtInformation, [mbOk], 0);
+                 ImageHolder.Picture.Bitmap.LoadFromFile('twain_demo.bmp')
                end
           else MessageDlg('NO Files Downloaded', mtError, [mbOk], 0);
         end;
@@ -134,6 +190,11 @@ begin
         TwainSettingsSource.Free; TwainSettingsSource:= Nil;
       end;
     end;
+end;
+
+procedure TFormTwainDemo.FormCreate(Sender: TObject);
+begin
+  edPath.Text:= ExtractFilePath(ParamStr(0));
 end;
 
 procedure TFormTwainDemo.FormDestroy(Sender: TObject);
@@ -170,6 +231,14 @@ begin
 //      capRet :=TwainSource.GetAutoFeed(test);
 
     end;
+end;
+
+procedure TFormTwainDemo.btBrowseClick(Sender: TObject);
+var
+   ADir: String;
+
+begin
+  if SelectPath(ADir) then edPath.Text:= ADir;
 end;
 
 function TFormTwainDemo.getTwain: TDelphiTwain;

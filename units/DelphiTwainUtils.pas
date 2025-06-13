@@ -1,11 +1,23 @@
-{GENERAL METHODS USED BY TWAIN DELPHI}
-{december 2001®, made by Gustavo Daud}
-
-{This unit contains general methods used by Delphi}
-{Twain component. Some of the methods bellow aren't}
-{directly related to Twain, but are pieces needed}
-{to implement the component.}
-
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: DelphiTwainUtils.pas                                                 *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    GENERAL METHODS USED BY TWAIN DELPHI                                     *
+*    This unit contains general methods used by Delphi Twain component.       *
+*    Some of the methods bellow aren't directly related to Twain, but         *
+*    are pieces needed to implement the component.                            *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2001 Gustavo Daud, 2025 Massimo Magnano                                *
+*                                                                             *
+*  See changelog.txt for Change Log                                           *
+*                                                                             *
+*******************************************************************************)
 unit DelphiTwainUtils;
 
 {$INCLUDE DELPHITWAIN.INC}

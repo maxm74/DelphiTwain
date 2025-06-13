@@ -1,3 +1,20 @@
+(******************************************************************************
+*                FreePascal \ Delphi Twain Implementation                     *
+*                                                                             *
+*  FILE: DelphiTwain_VCL.pas                                                  *
+*                                                                             *
+*  VERSION:     2.3.1                                                         *
+*                                                                             *
+*  DESCRIPTION:                                                               *
+*    Twain implementation derived Classes for LCL/VCL                         *
+*                                                                             *
+*******************************************************************************
+*                                                                             *
+*  (c) 2003 Gustavo Daud, 2025 Massimo Magnano                                *
+*                                                                             *
+*  See changelog.txt for Change Log                                           *
+*                                                                             *
+*******************************************************************************)
 unit DelphiTwain_VCL;
 
 {$I DelphiTwain.inc}
