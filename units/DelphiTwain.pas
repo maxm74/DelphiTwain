@@ -1264,7 +1264,7 @@ function VirtualWinProc(Handle: THandle; uMsg: UINT; wParam: WPARAM; lParam: LPA
   {Returns the TCustomDelphiTwain object}
   function Obj: TCustomDelphiTwain;
   begin
-    DTNativeUInt(Result) := GetWindowLong(Handle, GWL_USERDATA);
+    {%H-}Result := Pointer(PtrUInt(GetWindowLong(Handle, GWL_USERDATA)));
   end {function};
 
 var
@@ -1278,7 +1278,7 @@ begin
     WM_CREATE:
       {Stores the TCustomDelphiTwain object handle}
       with {%H-}pCreateStruct(lParam)^ do
-        SetWindowLong(Handle, GWL_USERDATA, {%H-}Longint(lpCreateParams));
+        SetWindowLong(Handle, GWL_USERDATA, {%H-}PtrUInt(lpCreateParams));
     {case} else
     begin
       {Try to obtain the current object pointer}
@@ -1338,7 +1338,7 @@ begin
   end;
 
   fVirtualWindow :=CreateWindowExW(0, @VirtualWinClassName, @VirtualWinClassName,
-    WS_POPUP, 0, 0, 0, 0, 0, 0, HInstance, Self);
+    WS_POPUP, 0, 0, 0, 0, 0, 0, HInstance, Pointer(PtrUint(Self)));
 end;
 
 procedure TCustomDelphiTwain.DoDestroyVirtualWindow;
