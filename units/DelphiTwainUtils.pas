@@ -86,12 +86,6 @@ type
 function GetCustomDirectory(const DirectoryKind: TDirectoryKind): String;
 {Returns the last error string from Microsoft Windows®}
 function GetLastErrorText: String;
-{Returns if the directory exists}
-function DirectoryExists(const Directory: String): Boolean;
-{Returns if the file exists}
-function FileExists(const FilePath: String): Boolean;
-{Extracts the file directory part}
-function ExtractDirectory(const FilePath: String): String;
 {Convert from integer to string}
 {Convert from twain Fix32 to Single}
 function Fix32ToFloat(Value: TW_FIX32): Single;
@@ -102,7 +96,7 @@ function FloatToFix32(floater: Single): TW_FIX32;
 function DibNumColors(pv: Pointer): Word;
 
 //Write a Windows Bitmap Native Handle to File
-function WriteBitmapToFile(FileName:String; hDIB: TW_UINT32): Boolean; overload;
+function WriteBitmapToFile(FileName:String; hDIB: THandle): Boolean; overload;
 //Write a Windows HBitmap Handle to File (32bit RGB)
 function WriteBitmapToFile(FileName:String; hBmp:HBITMAP; hDC:HDC): Boolean; overload;
 
@@ -171,29 +165,6 @@ begin
   {Searches for the last \ or : characters}
   {ex: c:\windows\system32\yfile.ext or c:autoexec.bat}
   Result := Copy(FilePath, 1, LastPosition(FilePath, '\:'));
-end;
-
-{Returns if the file exists}
-function FileExists(const FilePath: String): Boolean;
-var
-  FindData  : TWin32FindData;
-  FindHandle: THandle;
-begin
-  {Searches for the file}
-  FindHandle := FindFirstFile(PChar(FilePath), {%H-}FindData);
-  Result := (FindHandle <> INVALID_HANDLE_VALUE);
-  {In case it found, closes the FindFirstFile handle}
-  if Result then FindClose(FindHandle);
-end;
-
-{Returns if the directory exists}
-function DirectoryExists(const Directory: String): Boolean;
-var
-  Attr: DWORD;
-begin
-  {Calls GetFileAttributes to verify}
-  Attr := GetFileAttributes(PChar(Directory));
-  Result := (Attr <> $FFFFFFFF) and (Attr and FILE_ATTRIBUTE_DIRECTORY <> 0);
 end;
 
 {Makes an language identifier using the two ids}
@@ -314,7 +285,7 @@ begin
 
 end;
 
-function WriteBitmapToFile(FileName:String; hDIB: TW_UINT32): Boolean;
+function WriteBitmapToFile(FileName:String; hDIB: THandle): Boolean;
 var
    DibInfo: PBITMAPINFO;
    hdr: BITMAPFILEHEADER;

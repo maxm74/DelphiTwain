@@ -62,7 +62,7 @@ type
     function CustomGetParentWindow: TW_HANDLE; override;
 
     procedure DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                   nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean); override;
+                                   nativeHandle: THandle; var NeedBitmap, Cancel: Boolean); override;
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer;
                              imageHandle:HBitmap; var Cancel: Boolean); override;
     procedure DoAcquireProgress(Sender: TObject; const Index: Integer;
@@ -144,7 +144,7 @@ begin
 end;
 
 procedure TDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                           nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean);
+                                           nativeHandle: THandle; var NeedBitmap, Cancel: Boolean);
 begin
   //MaxM: No need to create HBitmap if unused
   NeedBitmap:=Assigned(fOnTwainAcquire);

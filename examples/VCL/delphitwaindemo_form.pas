@@ -78,7 +78,7 @@ type
     function TwainProcessMessages(Sender: TObject; const Index: Integer): Boolean;
 
     procedure TwainAcquireNative(Sender: TObject; const Index: Integer;
-                                nativeHandle: TW_UINT32; var Cancel: Boolean);
+                                nativeHandle: THandle; var Cancel: Boolean);
     procedure TwainAcquire(Sender: TObject; const Index: Integer;
                            Image: TBitmap; var Cancel: Boolean);
   end;
@@ -262,7 +262,7 @@ begin
 end;
 
 procedure TFormTwainDemo.TwainAcquireNative(Sender: TObject; const Index: Integer;
-  nativeHandle: TW_UINT32; var Cancel: Boolean);
+  nativeHandle: THandle; var Cancel: Boolean);
 begin
   with TCustomDelphiTwain(Sender).Source[Index] do
   try

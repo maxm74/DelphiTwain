@@ -149,7 +149,7 @@ type
     rDownload_FileName: String;
 
     {Reads a native image}
-    procedure ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
+    procedure ReadNative(nativeHandle: THandle; var Cancel: Boolean);
     {Reads the file image}
     procedure ReadFile(Name: TW_STR255; Format: TW_UINT16; var Cancel: Boolean);
     {Call event for memory image}
@@ -451,7 +451,7 @@ type
   {Component part}
 
   TTwainAcquireNativeEvent = procedure (Sender: TObject; const Index: Integer;
-                                        nativeHandle: TW_UINT32; var Cancel: Boolean) of object;
+                                        nativeHandle: THandle; var Cancel: Boolean) of object;
   TTwainAcquireBitmapEvent = procedure (Sender: TObject; const Index: Integer;
                                         imageHandle:HBitmap; var Cancel: Boolean) of object;
   TAcquireProgressEvent = procedure (Sender: TObject; const Index: Integer;
@@ -548,7 +548,7 @@ type
     function CustomSelectSource: Integer; virtual; abstract;
     function CustomGetParentWindow: TW_HANDLE; virtual;
 
-    procedure DoTwainAcquireNative(Sender: TObject; const Index: Integer; nativeHandle: TW_UINT32;
+    procedure DoTwainAcquireNative(Sender: TObject; const Index: Integer; nativeHandle: THandle;
                                    var NeedBitmap, Cancel: Boolean); virtual;
     procedure DoTwainAcquire(Sender: TObject; const Index: Integer; imageHandle:HBitmap;
                              var Cancel: Boolean); virtual;
@@ -1391,7 +1391,7 @@ begin
 end;
 
 procedure TCustomDelphiTwain.DoTwainAcquireNative(Sender: TObject; const Index: Integer;
-                                                 nativeHandle: TW_UINT32; var NeedBitmap, Cancel: Boolean);
+                                                 nativeHandle: THandle; var NeedBitmap, Cancel: Boolean);
 begin
   //MaxM: No need to create HBitmap if unused
   NeedBitmap :=NeedBitmap or Assigned(rOnTwainAcquireBitmap);
@@ -3499,7 +3499,7 @@ var
   {Return code from Twain method}
   rc : TW_UINT16;
   {Handle to the native Device independent Image (DIB)}
-  hNative: TW_UINT32;
+  hNative: THandle;
   {Pending transfers structure}
   PendingXfers: TW_PENDINGXFERS;
   {File transfer info}
@@ -3660,7 +3660,7 @@ begin
 end;
 
 {Reads a native image}
-procedure TTwainSource.ReadNative(nativeHandle: TW_UINT32; var Cancel: Boolean);
+procedure TTwainSource.ReadNative(nativeHandle: THandle; var Cancel: Boolean);
 var
   DibInfo: PBITMAPINFO;
   ColorTableSize: Integer;
@@ -3684,7 +3684,7 @@ begin
     Inc(lpBits, DibInfo.bmiHeader.biSize);
     //{$ELSE}
     //DELPHI BUG - due to wrong PChar definition
-    //Inc(lpBits, DibInfo.bmiHeader.biSize div 2);
+    //Inc(lpBits, DibInfo.bmiHeader.biSize div 2);      //MaxM: Maybe Tested with variuos Delphi versions, with ver. 12-13 works
     //{$ENDIF}
     Inc(lpBits, ColorTableSize);
     //lpBits := PAnsiChar(DibInfo^.bmiColors);

@@ -31,7 +31,6 @@ object FormTwainDemo: TFormTwainDemo
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 705
     DesignSize = (
       707
       100)
@@ -100,7 +99,6 @@ object FormTwainDemo: TFormTwainDemo
       Height = 23
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 5
-      ExplicitWidth = 431
     end
     object btBrowse: TButton
       Left = 611
@@ -111,7 +109,6 @@ object FormTwainDemo: TFormTwainDemo
       Caption = 'Browse ...'
       TabOrder = 6
       OnClick = btBrowseClick
-      ExplicitLeft = 609
     end
   end
 end

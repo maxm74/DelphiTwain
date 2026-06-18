@@ -112,9 +112,6 @@ const
  ***************************************************************************}
 
 type
-  THandle = LongWord;
-  {$EXTERNALSYM THandle}
-
   TW_HANDLE = THandle;
   {$EXTERNALSYM TW_HANDLE}
   TTWHandle = TW_HANDLE;
@@ -123,9 +120,11 @@ type
   {$EXTERNALSYM TW_MEMREF}
   TTWMemRef = TW_MEMREF;
 
-  TW_UINTPTR = LongWord;
+  TW_UINTPTR = THandle;
   {$EXTERNALSYM TW_UINTPTR}
   TTWUintPtr = TW_UINTPTR;
+
+  {$define PACK 2}
 
 {***************************************************************************
  * Type Definitions                                                        *
@@ -3531,7 +3530,7 @@ type
                           DG: TW_UINT32;
                           DAT: TW_UINT16;
                           MSG: TW_UINT16;
-                          pData: TW_MEMREF): TW_UINT16; stdcall;
+                          pData: TW_MEMREF): TW_UINT16; stdcall; //MaxM: Twain Specification says "far; pascal;" but really is stdcall ???
   {$EXTERNALSYM DSMENTRYPROC}
   TDSMEntryProc = DSMENTRYPROC;
 
@@ -3574,7 +3573,7 @@ type
                          DG: TW_UINT32;
                          DAT: TW_UINT16;
                          MSG: TW_UINT16;
-                         pData: TW_MEMREF): TW_UINT16; stdcall;
+                         pData: TW_MEMREF): TW_UINT16; stdcall; //far; pascal;
   {$EXTERNALSYM DSENTRYPROC}
   TDSEntryProc = DSENTRYPROC;
 
@@ -3590,7 +3589,7 @@ type
                                DG: TW_UINT32;
                                DAT: TW_UINT16;
                                MSG: TW_UINT16;
-                               pData: TW_MEMREF): TW_UINT16; stdcall;
+                               pData: TW_MEMREF): TW_UINT16; stdcall; //far; pascal;
   {$EXTERNALSYM TWAINCALLBACKPROC}
   TTwainCallbackProc = TWAINCALLBACKPROC;
 
@@ -3598,19 +3597,19 @@ var
   TWAIN_Callback: TTwainCallbackProc = nil;
 
 type
-  DSM_MEMALLOCATE = function(_size: TW_UINT32): TW_HANDLE; stdcall;
+  DSM_MEMALLOCATE = function(_size: TW_UINT32): TW_HANDLE; stdcall; // far; pascal;
   {$EXTERNALSYM DSM_MEMALLOCATE}
   TDSM_MemAllocate = DSM_MEMALLOCATE;
 
-  DSM_MEMFREE = procedure(_handle: TW_HANDLE); stdcall;
+  DSM_MEMFREE = procedure(_handle: TW_HANDLE); stdcall; // far; pascal;
   {$EXTERNALSYM DSM_MEMFREE}
   TDSM_MemFree = DSM_MEMFREE;
 
-  DSM_MEMLOCK = function(_handle: TW_HANDLE): TW_MEMREF; stdcall;
+  DSM_MEMLOCK = function(_handle: TW_HANDLE): TW_MEMREF; stdcall; // far; pascal;
   {$EXTERNALSYM DSM_MEMLOCK}
   TDSM_MemLock = DSM_MEMLOCK;
 
-  DSM_MEMUNLOCK = procedure(_handle: TW_HANDLE); stdcall;
+  DSM_MEMUNLOCK = procedure(_handle: TW_HANDLE); stdcall; // far; pascal;
   {$EXTERNALSYM DSM_MEMUNLOCK}
   TDSM_MemUnlock = DSM_MEMUNLOCK;
 
