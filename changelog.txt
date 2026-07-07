@@ -1,5 +1,8 @@
 DELPHITWAIN CHANGE LOG
 ======================
+2026/07/07 MaxM - Release 2.3.2;
+          Solved Compatibility with Delphi 64 bit Target;
+		  
 2025/06/13 MaxM - Release 2.3.1;
 		  Updated Copyright and Version Infos;
 	  	  GetTwainDirectory handle FileExists Exception;

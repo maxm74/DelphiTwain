@@ -29,7 +29,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="lib\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
+            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -61,7 +61,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="lib\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
+            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -104,7 +104,7 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="lib\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
+            <Filename Value="bin\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
@@ -170,7 +170,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="lib\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
+      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\DelphiTwainDemo"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

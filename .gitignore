@@ -24,7 +24,7 @@
 *.elf
 *.bin
 *.ppl
-.*.swp
+*.swp
 *~
 *.lps
 *.elg
