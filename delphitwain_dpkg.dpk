@@ -35,13 +35,13 @@ requires
   VclSmp;
 
 contains
-  Twain in 'units\Twain.pas',
-  DelphiTwain in 'units\DelphiTwain.pas',
-  DelphiTwain_VCL in 'units\DelphiTwain_VCL.pas',
-  DelphiTwainUtils in 'units\DelphiTwainUtils.pas',
-  DelphiTwain_SelectForm in 'units\DelphiTwain_SelectForm.pas' {TwainSelectSource},
-  DelphiTwain_SettingsForm in 'units\DelphiTwain_SettingsForm.pas' {TwainSettingsSource},
-  DelphiTwainTypes in 'units\DelphiTwainTypes.pas';
+  Twain in 'src\Twain.pas',
+  DelphiTwain in 'src\DelphiTwain.pas',
+  DelphiTwain_VCL in 'src\DelphiTwain_VCL.pas',
+  DelphiTwainUtils in 'src\DelphiTwainUtils.pas',
+  DelphiTwain_SelectForm in 'src\DelphiTwain_SelectForm.pas' {TwainSelectSource},
+  DelphiTwain_SettingsForm in 'src\DelphiTwain_SettingsForm.pas' {TwainSettingsSource},
+  DelphiTwainTypes in 'src\DelphiTwainTypes.pas';
 
 end.
 

@@ -8,7 +8,7 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <OtherUnitFiles Value="units"/>
+        <OtherUnitFiles Value="src"/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <CodeGeneration>
@@ -22,31 +22,31 @@
     <Version Major="2" Minor="3" Release="2"/>
     <Files>
       <Item>
-        <Filename Value="units\Twain.pas"/>
+        <Filename Value="src\Twain.pas"/>
         <UnitName Value="Twain"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwain.pas"/>
+        <Filename Value="src\DelphiTwain.pas"/>
         <UnitName Value="DelphiTwain"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwain_VCL.pas"/>
+        <Filename Value="src\DelphiTwain_VCL.pas"/>
         <UnitName Value="DelphiTwain_VCL"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwainUtils.pas"/>
+        <Filename Value="src\DelphiTwainUtils.pas"/>
         <UnitName Value="DelphiTwainUtils"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwainTypes.pas"/>
+        <Filename Value="src\DelphiTwainTypes.pas"/>
         <UnitName Value="DelphiTwainTypes"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwain_SelectForm.pas"/>
+        <Filename Value="src\DelphiTwain_SelectForm.pas"/>
         <UnitName Value="DelphiTwain_SelectForm"/>
       </Item>
       <Item>
-        <Filename Value="units\DelphiTwain_SettingsForm.pas"/>
+        <Filename Value="src\DelphiTwain_SettingsForm.pas"/>
         <UnitName Value="DelphiTwain_SettingsForm"/>
       </Item>
     </Files>

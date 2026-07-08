@@ -5,8 +5,8 @@
         <ProjectVersion>20.1</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <Config Condition="'$(Config)'==''">Release</Config>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Package</AppType>
         <ProjectName Condition="'$(ProjectName)'==''">delphitwain_dpkg</ProjectName>
@@ -187,19 +187,19 @@
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vcl.dcp"/>
         <DCCReference Include="VclSmp.dcp"/>
-        <DCCReference Include="units\Twain.pas"/>
-        <DCCReference Include="units\DelphiTwain.pas"/>
-        <DCCReference Include="units\DelphiTwain_VCL.pas"/>
-        <DCCReference Include="units\DelphiTwainUtils.pas"/>
-        <DCCReference Include="units\DelphiTwain_SelectForm.pas">
+        <DCCReference Include="src\Twain.pas"/>
+        <DCCReference Include="src\DelphiTwain.pas"/>
+        <DCCReference Include="src\DelphiTwain_VCL.pas"/>
+        <DCCReference Include="src\DelphiTwainUtils.pas"/>
+        <DCCReference Include="src\DelphiTwain_SelectForm.pas">
             <Form>TwainSelectSource</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="units\DelphiTwain_SettingsForm.pas">
+        <DCCReference Include="src\DelphiTwain_SettingsForm.pas">
             <Form>TwainSettingsSource</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="units\DelphiTwainTypes.pas"/>
+        <DCCReference Include="src\DelphiTwainTypes.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
